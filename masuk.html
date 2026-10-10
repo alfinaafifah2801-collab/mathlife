@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Masuk atau daftar | MathLife</title>
+  <link rel="icon" type="image/png" href="assets/favicon-64.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<main class="auth">
+  <div class="auth-kartu">
+    <a class="merek" href="index.html" aria-label="MathLife, beranda">
+      <img src="assets/ikon-mathy.png" alt="" width="44" height="31">
+      <span class="merek-teks">Math<span>Life</span></span>
+    </a>
+
+    <div id="pesan"></div>
+
+    <div class="tab" role="tablist" aria-label="Masuk atau daftar">
+      <button type="button" role="tab" id="tab-masuk" aria-selected="true" aria-controls="panel-masuk">Masuk</button>
+      <button type="button" role="tab" id="tab-daftar" aria-selected="false" aria-controls="panel-daftar">Daftar</button>
+    </div>
+
+    <section id="panel-masuk" role="tabpanel" aria-labelledby="tab-masuk">
+      <form id="form-masuk">
+        <label class="field"><span>Email</span>
+          <input type="email" name="email" autocomplete="email" required>
+        </label>
+        <label class="field"><span>Kata sandi</span>
+          <input type="password" name="password" autocomplete="current-password" required>
+        </label>
+        <button class="btn" type="submit">Masuk</button>
+      </form>
+      <p class="tautan"><button type="button" class="btn-teks" id="ke-lupa">Lupa kata sandi?</button></p>
+    </section>
+
+    <section id="panel-daftar" role="tabpanel" aria-labelledby="tab-daftar" hidden>
+      <form id="form-daftar">
+        <label class="field"><span>Nama lengkap</span>
+          <input type="text" name="nama" autocomplete="name" required maxlength="80">
+        </label>
+        <label class="field"><span>Kelas (boleh dikosongkan)</span>
+          <select name="kelas">
+            <option value="">Pilih kelas</option>
+            <option value="7">Kelas VII</option>
+            <option value="8">Kelas VIII</option>
+            <option value="9">Kelas IX</option>
+          </select>
+        </label>
+        <label class="field"><span>Email</span>
+          <input type="email" name="email" autocomplete="email" required>
+        </label>
+        <label class="field"><span>Kata sandi (minimal 8 karakter)</span>
+          <input type="password" name="password" autocomplete="new-password" minlength="8" required>
+        </label>
+        <button class="btn" type="submit">Buat akun</button>
+      </form>
+    </section>
+
+    <section id="panel-lupa" hidden>
+      <h2>Atur ulang kata sandi</h2>
+      <p>Masukkan email akunmu. Kami kirim tautan untuk membuat kata sandi baru.</p>
+      <form id="form-lupa">
+        <label class="field"><span>Email</span>
+          <input type="email" name="email" autocomplete="email" required>
+        </label>
+        <button class="btn" type="submit">Kirim tautan</button>
+      </form>
+      <p class="tautan"><button type="button" class="btn-teks" id="ke-masuk">Kembali ke halaman masuk</button></p>
+    </section>
+
+    <section id="panel-baru" hidden>
+      <h2>Buat kata sandi baru</h2>
+      <form id="form-baru">
+        <label class="field"><span>Kata sandi baru (minimal 8 karakter)</span>
+          <input type="password" name="password" autocomplete="new-password" minlength="8" required>
+        </label>
+        <button class="btn" type="submit">Simpan kata sandi</button>
+      </form>
+    </section>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/masuk.js"></script>
+</body>
+</html>

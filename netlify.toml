@@ -1,0 +1,10 @@
+# Situs MathLife berupa HTML, CSS, dan JavaScript biasa, jadi tidak perlu proses build.
+[build]
+  publish = "."
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    Referrer-Policy = "strict-origin-when-cross-origin"

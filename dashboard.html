@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard | MathLife</title>
+  <link rel="icon" type="image/png" href="assets/favicon-64.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap topbar-isi">
+    <a class="merek" href="index.html" aria-label="MathLife, beranda">
+      <img src="assets/ikon-mathy.png" alt="" width="44" height="31">
+      <span class="merek-teks">Math<span>Life</span></span>
+    </a>
+    <div class="pengguna">
+      <div>
+        <strong id="nama-pengguna"></strong>
+        <small id="peran-pengguna"></small>
+      </div>
+      <button type="button" class="btn btn-sekunder btn-kecil" id="keluar">Keluar</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap dasbor" id="app">
+  <p class="redup">Memuat dashboard...</p>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/dashboard.js"></script>
+</body>
+</html>
