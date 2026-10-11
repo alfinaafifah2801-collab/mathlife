@@ -1,0 +1,60 @@
+// Daftar kurikulum MathLife (15 bab). Untuk menambah subbab yang sudah jadi:
+// 1) ubah tersedia: true pada subbab itu, 2) tambahkan file js/konten/<id-subbab>.js.
+// gratis: true = subbab bisa dibuka siswa yang belum punya paket (pratinjau).
+window.KURIKULUM = [
+  {
+    kelas: 7,
+    bab: [
+      {
+        id: 'k7-b1', no: 1, judul: 'Bilangan', cakupan: 'Bilangan bulat, pecahan, desimal, persen', game: 'Math Bank',
+        subbab: [
+          { id: 'k7-b1-s1', no: '1.1', judul: 'Bilangan Bulat', tersedia: true, gratis: true },
+          { id: 'k7-b1-s2', no: '1.2', judul: 'Pecahan', tersedia: false },
+          { id: 'k7-b1-s3', no: '1.3', judul: 'Desimal dan Pembulatan', tersedia: false },
+          { id: 'k7-b1-s4', no: '1.4', judul: 'Persen', tersedia: false }
+        ]
+      },
+      { id: 'k7-b2', no: 2, judul: 'Perbandingan & Aritmetika Sosial', cakupan: 'Rasio, skala, diskon, untung-rugi, pajak', game: 'Mall Simulator' },
+      { id: 'k7-b3', no: 3, judul: 'Aljabar', cakupan: 'Bentuk aljabar, persamaan dan pertidaksamaan', game: 'Equation Puzzle' },
+      { id: 'k7-b4', no: 4, judul: 'Geometri', cakupan: 'Garis, sudut, bangun datar, luas dan keliling', game: 'Build It!' },
+      { id: 'k7-b5', no: 5, judul: 'Data & Peluang', cakupan: 'Tabel, diagram, mean, median, modus, peluang dasar', game: 'Data Detective' }
+    ]
+  },
+  {
+    kelas: 8,
+    bab: [
+      { id: 'k8-b1', no: 1, judul: 'Bilangan & Pola', cakupan: 'Perpangkatan, bentuk akar, pola bilangan' },
+      { id: 'k8-b2', no: 2, judul: 'Relasi, Fungsi & Persamaan', cakupan: 'Fungsi, grafik, persamaan garis lurus, SPLDV', game: 'Mall Simulator' },
+      { id: 'k8-b3', no: 3, judul: 'Geometri', cakupan: 'Pythagoras, lingkaran, bangun ruang', game: 'Build It!' },
+      { id: 'k8-b4', no: 4, judul: 'Transformasi', cakupan: 'Translasi, refleksi, rotasi, dilatasi', game: 'Math Trip' },
+      { id: 'k8-b5', no: 5, judul: 'Statistika & Peluang', cakupan: 'Analisis data dan peluang', game: 'Data Detective' }
+    ]
+  },
+  {
+    kelas: 9,
+    bab: [
+      { id: 'k9-b1', no: 1, judul: 'Aljabar Lanjutan', cakupan: 'Persamaan kuadrat dan fungsi kuadrat', game: 'Equation Puzzle' },
+      { id: 'k9-b2', no: 2, judul: 'Barisan & Pola', cakupan: 'Barisan aritmetika dan geometri' },
+      { id: 'k9-b3', no: 3, judul: 'Geometri Lanjutan', cakupan: 'Kesebangunan, kekongruenan, bangun ruang sisi lengkung', game: 'Build It!' },
+      { id: 'k9-b4', no: 4, judul: 'Statistika & Peluang', cakupan: 'Analisis data dan peluang', game: 'Data Detective' },
+      { id: 'k9-b5', no: 5, judul: 'Pemecahan Masalah', cakupan: 'Soal kontekstual dan latihan campuran' }
+    ]
+  }
+];
+
+// Sebuah bab dianggap tersedia jika punya minimal satu subbab yang sudah jadi.
+window.babTersedia = (b) => Boolean(b.subbab && b.subbab.some((s) => s.tersedia));
+
+window.cariBab = function (idBab) {
+  for (const k of window.KURIKULUM) for (const b of k.bab) if (b.id === idBab) return { kelas: k.kelas, bab: b };
+  return null;
+};
+
+window.cariSubbab = function (idSub) {
+  for (const k of window.KURIKULUM) {
+    for (const b of k.bab) {
+      for (const s of b.subbab || []) if (s.id === idSub) return { kelas: k.kelas, bab: b, sub: s };
+    }
+  }
+  return null;
+};

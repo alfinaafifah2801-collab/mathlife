@@ -299,3 +299,9 @@ insert into public.packages (slug, name, description, duration_days) values
   ('guru', 'Paket Guru', 'Materi dan alat bantu untuk guru yang mengajar mandiri.', 30),
   ('sekolah', 'Paket Sekolah', 'Akses untuk sekolah mitra, lengkap dengan rekap progres per kelas.', 365)
 on conflict (slug) do nothing;
+
+-- ---------- Tambahan: progres belajar (satu baris per soal) ----------
+create unique index if not exists progress_unik_item
+  on public.progress (user_id, item_type, item_key);
+alter table public.progress drop constraint if exists progress_xp_batas;
+alter table public.progress add constraint progress_xp_batas check (xp between 0 and 50);

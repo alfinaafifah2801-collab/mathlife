@@ -82,3 +82,13 @@ where id = (select id from auth.users where email = 'emailkamu@contoh.com');
 2. Game kedua dan ketiga (permintaan dosen).
 3. Dashboard guru dan admin sekolah (kelas, daftar siswa, rekap).
 4. Pembayaran: QRIS manual dengan konfirmasi admin, atau payment gateway.
+
+## Materi dan worksheet (tambahan)
+
+- `materi.html` menampilkan 15 bab (kelas 7 sampai 9). Bab tanpa subbab jadi tampil sebagai "Segera".
+- `subbab.html?id=k7-b1-s1` adalah mesin worksheet sepuluh bagian. Isi tiap subbab ada di `js/konten/<id>.js`.
+- Daftar bab dan status subbab ada di `js/kurikulum.js`. Untuk membuka subbab baru: ubah `tersedia: true` dan tambahkan file kontennya.
+- `gratis: true` pada subbab berarti bisa dibuka tanpa paket (pratinjau). Subbab lain butuh paket aktif.
+- Progres per soal tersimpan di tabel `progress`. Jalankan `supabase/migrasi-02-progres.sql` sekali di SQL Editor sebelum memakainya.
+
+Catatan: konten ada di file statis, jadi pembatasan paket hanya menjaga tampilan, bukan melindungi isi dari orang yang membuka file langsung. Kalau konten berbayar perlu benar-benar tertutup, pindahkan konten ke tabel Supabase di tahap berikutnya.

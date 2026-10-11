@@ -322,7 +322,8 @@
 
   const sapaan = h('div', { class: 'sapaan' },
     h('img', { src: 'assets/mathy-siap.png', alt: '', width: '84' }),
-    h('div', null, h('h1', null, 'Halo, ' + namaDepan + '!'), h('p', { class: 'redup' }, keterangan)));
+    h('div', null, h('h1', null, 'Halo, ' + namaDepan + '!'), h('p', { class: 'redup' }, keterangan),
+      h('a', { class: 'btn btn-kecil', href: 'materi.html' }, 'Buka materi')));
 
   const grid = h('div', { class: 'grid-panel' });
   if (profil.role === 'admin_platform') {
