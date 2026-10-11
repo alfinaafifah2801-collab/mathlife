@@ -268,3 +268,17 @@ a.kartu-bab:hover { border-color: var(--ml-blue); }
 @media (min-width: 820px) {
   .sim { grid-template-columns: 320px 1fr; }
 }
+
+/* ---------- Satu langkah per layar ---------- */
+.fase-tab { display: inline-flex; background: var(--ml-lavender); border-radius: 14px; padding: 4px; margin: .2rem 0 .8rem; }
+.fase-tab button { font: 600 1rem var(--font-judul); color: var(--ml-navy); background: transparent; border: 0; border-radius: 11px; padding: .45rem 1.1rem; cursor: pointer; }
+.fase-tab button[aria-pressed="true"] { background: #fff; }
+.langkah-info { margin: 0 0 .4rem; font-weight: 700; color: #5B5A85; max-width: none; }
+.langkah-garis { height: 8px; background: var(--ml-lavender); border-radius: 999px; margin-bottom: 1rem; overflow: hidden; }
+.langkah-garis span { display: block; height: 100%; background: var(--ml-yellow); border-radius: 999px; transition: width .25s; }
+.nav-bagian a[aria-current="step"] { background: var(--ml-navy); border-color: var(--ml-navy); color: #fff; }
+.sub-halaman { margin-top: -.2rem; }
+.belajar h2:focus { outline: none; }
+.pindah { position: sticky; bottom: 0; display: flex; justify-content: space-between; gap: .8rem; padding: .8rem 0 .6rem; background: linear-gradient(to top, var(--ml-cream) 70%, rgba(255, 248, 234, 0)); }
+.pindah .btn[hidden] { display: none; }
+.pindah .btn:last-child { margin-left: auto; }

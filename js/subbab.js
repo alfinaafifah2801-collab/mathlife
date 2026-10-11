@@ -345,37 +345,85 @@
       h('p', null, h('a', { href: 'materi.html?bab=' + meta.bab.id }, 'Kembali ke bab')));
   }
 
-  // ---------- Susun halaman ----------
+  // ---------- Susun halaman: satu langkah per layar ----------
   const NAMA = [
     ['kenalan', 'Kenalan dengan Materi'], ['nyata', 'Math in Life'], ['konsep', 'Pahami Konsep'],
     ['contoh', 'Contoh Bertahap'], ['mini', 'Mini Challenge'], ['game', 'MathLife Game'],
     ['simulator', 'MathLife Simulator'], ['latihan', 'Latihan Berjenjang'], ['evaluasi', 'Evaluasi'], ['progres', 'Progress']
   ];
   const nama = Object.fromEntries(NAMA);
-  const bagian = (kunci, ...isi) => h('section', { class: 'belajar', id: 'bag-' + kunci }, h('h2', null, nama[kunci]), ...isi);
 
-  let nomorLatihan = 1;
-  const latihan = K.latihan.map((lv) => {
-    const el = h('div', { class: 'level' }, h('h3', null, lv.nama), lv.pengantar ? h('p', { class: 'redup' }, lv.pengantar) : null, ...daftarSoal(lv.soal, 1));
-    nomorLatihan += lv.soal.length;
-    return el;
-  });
-  const evaluasi = K.evaluasi.map((g) => h('div', { class: 'level' }, h('h3', null, g.judul), ...daftarSoal(g.soal, 1)));
+  // Setiap langkah dibuat sekali lalu disembunyikan/ditampilkan, jadi jawaban dan posisi lift tidak hilang saat pindah layar.
+  const halaman = [];
+  function tambah(kunci, fase, subjudul, ...isi) {
+    const n = halaman.length;
+    const judul = h('h2', { id: 'jdl-' + n, tabindex: '-1' }, nama[kunci]);
+    const el = h('section', { class: 'belajar', hidden: true, 'aria-labelledby': 'jdl-' + n },
+      judul, subjudul ? h('h3', { class: 'sub-halaman' }, subjudul) : null, ...isi);
+    halaman.push({ kunci, fase, el, judul, subjudul });
+  }
+
+  // Tahap Materi
+  tambah('kenalan', 'materi', null, ...blokSemua(K.kenalan));
+  tambah('nyata', 'materi', null, ...blokSemua(K.nyata.blok), ...daftarSoal(K.nyata.soal || [], 1));
+  tambah('konsep', 'materi', null, ...blokSemua(K.konsep));
+  tambah('contoh', 'materi', null, ...blokSemua(K.contoh));
+  // Tahap Pengerjaan
+  tambah('mini', 'kerja', null, h('p', { class: 'redup' }, 'Soal-soal yang sedikit beda dari biasanya. Santai saja, boleh dicoba berkali-kali.'), ...daftarSoal(K.mini, 1));
+  tambah('game', 'kerja', null, ...gameBank(K.game));
+  tambah('simulator', 'kerja', null, ...simulatorLift(K.simulator));
+  K.latihan.forEach((lv) => tambah('latihan', 'kerja', lv.nama, lv.pengantar ? h('p', { class: 'redup' }, lv.pengantar) : null, ...daftarSoal(lv.soal, 1)));
+  K.evaluasi.forEach((g) => tambah('evaluasi', 'kerja', g.judul, ...daftarSoal(g.soal, 1)));
+  tambah('progres', 'kerja', null, wadahProgres);
+
+  const jumlah = halaman.length;
+  const pertama = (fase) => halaman.findIndex((p) => p.fase === fase);
+  const pergi = (i) => { location.hash = 'langkah-' + (Math.min(Math.max(i, 0), jumlah - 1) + 1); };
+  let sekarang = 0;
+
+  const tombolFase = {
+    materi: h('button', { type: 'button', onclick: () => pergi(pertama('materi')) }, 'Materi'),
+    kerja: h('button', { type: 'button', onclick: () => pergi(pertama('kerja')) }, 'Pengerjaan')
+  };
+  const barFase = h('div', { class: 'fase-tab', role: 'group', 'aria-label': 'Tahap belajar' }, tombolFase.materi, tombolFase.kerja);
+  const info = h('p', { class: 'langkah-info', 'aria-live': 'polite' });
+  const isiGaris = h('span');
+  const garis = h('div', { class: 'langkah-garis' }, isiGaris);
+  const chip = NAMA.map(([k, t]) => h('a', { href: '#langkah-' + (halaman.findIndex((p) => p.kunci === k) + 1), 'data-k': k }, t));
+  const navBagian = h('nav', { class: 'nav-bagian', 'aria-label': 'Bagian subbab' }, chip);
+  const tombolKembali = h('button', { type: 'button', class: 'btn btn-sekunder', onclick: () => pergi(sekarang - 1) }, '\u2039 Kembali');
+  const tombolLanjut = h('button', { type: 'button', class: 'btn', onclick: () => pergi(sekarang + 1) }, 'Lanjut \u203A');
+  const pindah = h('div', { class: 'pindah' }, tombolKembali, tombolLanjut);
+
+  function tampil(i) {
+    sekarang = Math.min(Math.max(i, 0), jumlah - 1);
+    const p = halaman[sekarang];
+    halaman.forEach((x, j) => { x.el.hidden = j !== sekarang; });
+    tombolFase.materi.setAttribute('aria-pressed', String(p.fase === 'materi'));
+    tombolFase.kerja.setAttribute('aria-pressed', String(p.fase === 'kerja'));
+    info.textContent = 'Langkah ' + (sekarang + 1) + ' dari ' + jumlah + ' \u00B7 ' + nama[p.kunci] + (p.subjudul ? ': ' + p.subjudul : '');
+    isiGaris.style.width = Math.round(((sekarang + 1) / jumlah) * 100) + '%';
+    chip.forEach((a) => { if (a.dataset.k === p.kunci) a.setAttribute('aria-current', 'step'); else a.removeAttribute('aria-current'); });
+    tombolKembali.hidden = sekarang === 0;
+    tombolLanjut.hidden = sekarang === jumlah - 1;
+    const berikut = halaman[sekarang + 1];
+    tombolLanjut.textContent = berikut && berikut.fase !== p.fase ? 'Mulai mengerjakan \u203A' : 'Lanjut \u203A';
+    window.scrollTo({ top: 0 });
+    p.judul.focus({ preventScroll: true });
+  }
+  function dariHash() {
+    const m = location.hash.match(/^#langkah-(\d+)$/);
+    tampil(m ? Number(m[1]) - 1 : 0);
+  }
 
   app.replaceChildren(
     kembali('materi.html?bab=' + meta.bab.id, '\u2039 Bab ' + meta.bab.no + ': ' + meta.bab.judul),
     h('h1', null, meta.sub.no + ' ' + K.judul),
-    h('nav', { class: 'nav-bagian', 'aria-label': 'Bagian subbab' }, NAMA.map(([k, t]) => h('a', { href: '#bag-' + k }, t))),
-    bagian('kenalan', ...blokSemua(K.kenalan)),
-    bagian('nyata', ...blokSemua(K.nyata.blok), ...daftarSoal(K.nyata.soal || [], 1)),
-    bagian('konsep', ...blokSemua(K.konsep)),
-    bagian('contoh', ...blokSemua(K.contoh)),
-    bagian('mini', h('p', { class: 'redup' }, 'Soal-soal yang sedikit beda dari biasanya. Santai saja, boleh dicoba berkali-kali.'), ...daftarSoal(K.mini, 1)),
-    bagian('game', ...gameBank(K.game)),
-    bagian('simulator', ...simulatorLift(K.simulator)),
-    bagian('latihan', ...latihan),
-    bagian('evaluasi', ...evaluasi),
-    bagian('progres', wadahProgres));
+    barFase, info, garis, navBagian,
+    ...halaman.map((p) => p.el),
+    pindah);
 
+  window.addEventListener('hashchange', dariHash);
   perbarui();
+  dariHash();
 })();
