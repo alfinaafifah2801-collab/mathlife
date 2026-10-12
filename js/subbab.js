@@ -70,7 +70,12 @@
   const rupiah = (n) => (n < 0 ? '\u2212' : '') + 'Rp' + Math.abs(n).toLocaleString('id-ID');
 
   function parseAngka(teks) {
-    let s = String(teks).replace(/[\u2212\u2013\u2014]/g, '-').replace(/rp/ig, '').replace(/\s/g, '');
+    const t = String(teks).trim().replace(/[\u2212\u2013\u2014]/g, '-');
+    let m = t.match(/^(-?)(\d+)\s+(\d+)\/(\d+)$/); // pecahan campuran, contoh 1 1/2
+    if (m && Number(m[4]) !== 0) { const v = Number(m[2]) + Number(m[3]) / Number(m[4]); return m[1] ? -v : v; }
+    m = t.match(/^(-?\d+)\/(\d+)$/); // pecahan biasa, contoh 3/4
+    if (m) return Number(m[2]) === 0 ? NaN : Number(m[1]) / Number(m[2]);
+    let s = t.replace(/rp/ig, '').replace(/\s/g, '');
     if (s === '' || s === '-') return NaN;
     if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');
     else if (/^-?\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, '');
@@ -301,12 +306,72 @@
     ];
   }
 
+  // ---------- MathLife Game umum (jenis 'misi'): narasi + satu soal per babak ----------
+  function gameMisi(cfg) {
+    const babak = cfg.babak.map((b, i) => h('div', { class: 'babak' }, h('h3', null, 'Babak ' + (i + 1) + ': ' + b.judul),
+      soal(Object.assign({}, b, {
+        kepala: b.narasi ? h('div', { class: 'kotak kotak-krem' }, ...b.narasi.map((t) => h('p', null, t))) : null,
+        xp: b.xp || 10
+      }), null)));
+    return [h('p', null, cfg.cerita), ...babak];
+  }
+
+  // ---------- MathLife Simulator (jenis 'persen'): kotak seratus dan penggeser ----------
+  function simulatorPersen(cfg) {
+    let indeks = 0;
+    let selesaiMisi = false;
+    const sel = Array.from({ length: 100 }, () => h('span', { class: 'sel' }));
+    const grid = h('div', { class: 'grid-persen', role: 'img', 'aria-label': 'Kotak seratus petak' }, sel);
+    const geser = h('input', { type: 'range', min: '0', max: '100', step: '1', value: '0', 'aria-label': 'Persen' });
+    const nilaiP = h('strong', { class: 'nilai-persen' });
+    const rumus = h('p', { class: 'rumus' });
+    const pesan = h('div', { 'aria-live': 'polite' });
+    const misiInfo = h('p', { class: 'misi-info' });
+    const angka = (n, m) => (m.satuan === 'Rp' ? 'Rp' : '') + n.toLocaleString('id-ID', { maximumFractionDigits: 2 });
+    const lanjut = h('button', { type: 'button', class: 'btn btn-kecil', hidden: true, onclick: () => { indeks = (indeks + 1) % cfg.misi.length; mulai(); } }, 'Misi berikutnya');
+
+    function gambar() {
+      const m = cfg.misi[indeks];
+      const p = Number(geser.value);
+      sel.forEach((x, i) => x.classList.toggle('isi', i < p));
+      nilaiP.textContent = p + '%';
+      const hasil = (m.dasar * p) / 100;
+      rumus.textContent = p + '% \u00D7 ' + angka(m.dasar, m) + ' = ' + angka(hasil, m);
+      if (!selesaiMisi && Math.abs(hasil - m.target) < 1e-6 && p > 0) {
+        selesaiMisi = true;
+        pesan.replaceChildren(h('span', { class: 'benar-teks' }, 'Tepat! ' + p + '% dari ' + angka(m.dasar, m) + ' adalah ' + angka(m.target, m) + '. +10 XP'));
+        simpan(m.id, 1, 10);
+        lanjut.hidden = false;
+      } else if (!selesaiMisi) {
+        pesan.replaceChildren();
+      }
+    }
+    function mulai() {
+      const m = cfg.misi[indeks];
+      selesaiMisi = false;
+      geser.value = '0';
+      misiInfo.textContent = 'Misi ' + (indeks + 1) + ': ' + m.teks;
+      lanjut.hidden = true;
+      gambar();
+    }
+    geser.addEventListener('input', gambar);
+    mulai();
+    return [
+      h('p', null, cfg.cerita),
+      misiInfo,
+      h('div', { class: 'sim' }, grid,
+        h('div', { class: 'sim-kontrol' },
+          h('label', { class: 'field' }, h('span', null, 'Atur persen: ', nilaiP), geser),
+          rumus, pesan, lanjut))
+    ];
+  }
+
   // ---------- Daftar id untuk ringkasan ----------
   const idLatihan = K.latihan.map((l) => l.soal.map((s) => s.id));
   const idMini = K.mini.map((s) => s.id);
   const idEval = K.evaluasi.flatMap((g) => g.soal.map((s) => s.id));
-  const idGame = K.game.babak.map((b) => b.id);
-  const idSim = K.simulator.misi.map((m) => m.id);
+  const idGame = K.game ? K.game.babak.map((b) => b.id) : [];
+  const idSim = K.simulator ? K.simulator.misi.map((m) => m.id) : [];
   const idNyata = (K.nyata.soal || []).map((s) => s.id);
   const semuaId = [...idNyata, ...idMini, ...idGame, ...idSim, ...idLatihan.flat(), ...idEval];
 
@@ -335,7 +400,7 @@
       baris('Latihan benar', benarDari(idLatihan.flat()) + '/' + idLatihan.flat().length + ' (' + lat + '%)'),
       baris('MathLife Challenge', benarDari(tantangan) + '/' + tantangan.length),
       baris('Mini Challenge', benarDari(idMini) + '/' + idMini.length),
-      baris('Game dan Simulator', benarDari([...idGame, ...idSim]) + '/' + (idGame.length + idSim.length)),
+      idGame.length + idSim.length ? baris('Game dan Simulator', benarDari([...idGame, ...idSim]) + '/' + (idGame.length + idSim.length)) : null,
       baris('Evaluasi benar', benarDari(idEval) + '/' + idEval.length + ' (' + ev + '%)'),
       baris('Total XP', String(totalXp())),
       h('div', { class: 'lencana-kotak' + (lencana ? ' terbuka' : '') },
@@ -370,8 +435,8 @@
   tambah('contoh', 'materi', null, ...blokSemua(K.contoh));
   // Tahap Pengerjaan
   tambah('mini', 'kerja', null, h('p', { class: 'redup' }, 'Soal-soal yang sedikit beda dari biasanya. Santai saja, boleh dicoba berkali-kali.'), ...daftarSoal(K.mini, 1));
-  tambah('game', 'kerja', null, ...gameBank(K.game));
-  tambah('simulator', 'kerja', null, ...simulatorLift(K.simulator));
+  if (K.game) tambah('game', 'kerja', null, ...(K.game.jenis === 'misi' ? gameMisi(K.game) : gameBank(K.game)));
+  if (K.simulator) tambah('simulator', 'kerja', null, ...(K.simulator.jenis === 'persen' ? simulatorPersen(K.simulator) : simulatorLift(K.simulator)));
   K.latihan.forEach((lv) => tambah('latihan', 'kerja', lv.nama, lv.pengantar ? h('p', { class: 'redup' }, lv.pengantar) : null, ...daftarSoal(lv.soal, 1)));
   K.evaluasi.forEach((g) => tambah('evaluasi', 'kerja', g.judul, ...daftarSoal(g.soal, 1)));
   tambah('progres', 'kerja', null, wadahProgres);
@@ -389,7 +454,7 @@
   const info = h('p', { class: 'langkah-info', 'aria-live': 'polite' });
   const isiGaris = h('span');
   const garis = h('div', { class: 'langkah-garis' }, isiGaris);
-  const chip = NAMA.map(([k, t]) => h('a', { href: '#langkah-' + (halaman.findIndex((p) => p.kunci === k) + 1), 'data-k': k }, t));
+  const chip = NAMA.filter(([k]) => halaman.some((p) => p.kunci === k)).map(([k, t]) => h('a', { href: '#langkah-' + (halaman.findIndex((p) => p.kunci === k) + 1), 'data-k': k }, t));
   const navBagian = h('nav', { class: 'nav-bagian', 'aria-label': 'Bagian subbab' }, chip);
   const tombolKembali = h('button', { type: 'button', class: 'btn btn-sekunder', onclick: () => pergi(sekarang - 1) }, '\u2039 Kembali');
   const tombolLanjut = h('button', { type: 'button', class: 'btn', onclick: () => pergi(sekarang + 1) }, 'Lanjut \u203A');

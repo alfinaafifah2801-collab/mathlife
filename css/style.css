@@ -282,3 +282,10 @@ a.kartu-bab:hover { border-color: var(--ml-blue); }
 .pindah { position: sticky; bottom: 0; display: flex; justify-content: space-between; gap: .8rem; padding: .8rem 0 .6rem; background: linear-gradient(to top, var(--ml-cream) 70%, rgba(255, 248, 234, 0)); }
 .pindah .btn[hidden] { display: none; }
 .pindah .btn:last-child { margin-left: auto; }
+
+/* ---------- Simulator persen ---------- */
+.grid-persen { display: grid; grid-template-columns: repeat(10, 1fr); gap: 3px; max-width: 320px; width: 100%; }
+.grid-persen .sel { aspect-ratio: 1; background: var(--ml-lavender); border-radius: 4px; }
+.grid-persen .sel.isi { background: var(--ml-yellow); }
+.sim-kontrol input[type="range"] { padding: 0; border: 0; accent-color: var(--ml-navy); }
+.nilai-persen { color: var(--ml-navy); font-family: var(--font-judul); }

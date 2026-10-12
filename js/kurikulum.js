@@ -9,9 +9,9 @@ window.KURIKULUM = [
         id: 'k7-b1', no: 1, judul: 'Bilangan', cakupan: 'Bilangan bulat, pecahan, desimal, persen', game: 'Math Bank',
         subbab: [
           { id: 'k7-b1-s1', no: '1.1', judul: 'Bilangan Bulat', tersedia: true, gratis: true },
-          { id: 'k7-b1-s2', no: '1.2', judul: 'Pecahan', tersedia: false },
-          { id: 'k7-b1-s3', no: '1.3', judul: 'Desimal dan Pembulatan', tersedia: false },
-          { id: 'k7-b1-s4', no: '1.4', judul: 'Persen', tersedia: false }
+          { id: 'k7-b1-s2', no: '1.2', judul: 'Pecahan', tersedia: true },
+          { id: 'k7-b1-s3', no: '1.3', judul: 'Desimal dan Pembulatan', tersedia: true },
+          { id: 'k7-b1-s4', no: '1.4', judul: 'Persen', tersedia: true }
         ]
       },
       { id: 'k7-b2', no: 2, judul: 'Perbandingan & Aritmetika Sosial', cakupan: 'Rasio, skala, diskon, untung-rugi, pajak', game: 'Mall Simulator' },
