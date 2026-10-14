@@ -115,14 +115,16 @@
     const p = panel('Game MathLife');
     const game = [
       ['Mall Simulator', 'Aritmetika sosial dan SPLDV'],
-      ['Math Bank', 'Persentase dan bunga'],
+      ['Math Bank', 'Bilangan, persen, dan bunga', true],
       ['Build It!', 'Luas, keliling, dan volume'],
       ['Math Trip', 'Koordinat dan garis lurus'],
       ['Data Detective', 'Statistika dan peluang'],
       ['Equation Puzzle', 'Aljabar dan persamaan']
     ];
-    p.isi.replaceChildren(h('ul', { class: 'daftar' }, game.map(([nama, topik]) =>
-      h('li', null, h('strong', null, nama), ' ', h('span', { class: 'redup' }, topik), ' ', h('span', { class: 'lencana' }, 'Segera')))));
+    p.isi.replaceChildren(h('ul', { class: 'daftar' }, game.map(([nama, topik, ada]) =>
+      h('li', null, h('strong', null, nama), ' ', h('span', { class: 'redup' }, topik), ' ',
+        ada ? h('a', { class: 'btn btn-kecil', href: 'game.html?id=math-bank' }, 'Main') : h('span', { class: 'lencana' }, 'Segera')))),
+      h('p', { style: 'margin-top:.8rem' }, h('a', { href: 'game.html' }, 'Lihat semua game')));
     return p;
   }
 

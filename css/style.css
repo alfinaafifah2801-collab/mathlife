@@ -289,3 +289,20 @@ a.kartu-bab:hover { border-color: var(--ml-blue); }
 .grid-persen .sel.isi { background: var(--ml-yellow); }
 .sim-kontrol input[type="range"] { padding: 0; border: 0; accent-color: var(--ml-navy); }
 .nilai-persen { color: var(--ml-navy); font-family: var(--font-judul); }
+
+.tab-kelas .kelasmu { margin-left: .5rem; font: 700 .75rem var(--font-teks); background: var(--ml-yellow); color: var(--ml-ink); border-radius: 999px; padding: .05rem .5rem; vertical-align: middle; }
+
+/* ---------- Game ---------- */
+.game-kepala { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+.game-kepala img { flex: none; }
+.game-kepala h1 { margin-bottom: .2rem; }
+.game-kepala p { margin: 0; }
+.game-info { display: flex; gap: 1.2rem; flex-wrap: wrap; font-weight: 700; color: var(--ml-navy); margin-bottom: .4rem; }
+.game-info .api { color: #B35A00; }
+.nasabah { display: flex; gap: .9rem; align-items: flex-start; margin: 1rem 0; }
+.avatar { flex: none; width: 3.2rem; height: 3.2rem; border-radius: 50%; background: var(--ml-blue); color: #fff; display: grid; place-items: center; font: 700 1.4rem var(--font-judul); }
+.gelembung { background: #fff; border: 2px solid var(--ml-lavender); border-radius: 4px 20px 20px 20px; padding: .8rem 1.1rem; flex: 1; }
+.gelembung p { margin: .25rem 0; }
+.gelembung .tanya { font-weight: 700; color: var(--ml-navy); margin-top: .6rem; }
+.hasil-shift { max-width: 520px; }
+.bintang { font-size: 2.2rem; color: var(--ml-yellow); letter-spacing: .2rem; margin: 0 0 .5rem; }

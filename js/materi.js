@@ -13,7 +13,11 @@
 
   const params = new URLSearchParams(location.search);
   const idBab = params.get('bab');
-  const kelasDipilih = [7, 8, 9].includes(Number(params.get('kelas'))) ? Number(params.get('kelas')) : 7;
+  // Kelas siswa (dari profil) dipakai sebagai tab bawaan dan diberi label "Kelasmu". Semua kelas tetap bisa dibuka.
+  const { data: profil } = await db.from('profiles').select('grade').eq('id', uid).single();
+  const kelasSaya = profil && [7, 8, 9].includes(Number(profil.grade)) ? Number(profil.grade) : null;
+  const dariAlamat = Number(params.get('kelas'));
+  const kelasDipilih = [7, 8, 9].includes(dariAlamat) ? dariAlamat : (kelasSaya || 7);
 
   // ---------- Tampilan satu bab: daftar subbab ----------
   if (idBab) {
@@ -31,6 +35,7 @@
       .like('item_key', idBab + '-s%|selesai');
     (baris || []).forEach((r) => selesai.add(r.item_key.split('|')[0]));
 
+    const gameBab = (window.DAFTAR_GAME || []).find((g) => g.nama === bab.game);
     const daftar = (bab.subbab || []).map((s) => {
       const isi = h('div', null,
         h('strong', null, s.no + '  ' + s.judul),
@@ -43,7 +48,7 @@
           selesai.has(s.id) ? 'Ulangi' : 'Mulai'));
     });
 
-    app.replaceChildren(
+    app.replaceChildren(...[
       h('p', null, h('a', { href: 'materi.html?kelas=' + kelas }, '‹ Kelas ' + kelas)),
       h('h1', null, 'Bab ' + bab.no + ': ' + bab.judul),
       h('p', { class: 'redup' }, bab.cakupan),
@@ -51,7 +56,9 @@
       bab.game ? h('section', { class: 'panel', style: 'margin-top:1.25rem' },
         h('h2', null, 'Game dan Final Challenge'),
         h('p', null, 'Game bab ini: ' + bab.game + '. Final Challenge bab dibuka setelah semua subbab selesai.'),
-        h('span', { class: 'lencana' }, 'Segera')) : null);
+        gameBab && gameBab.tersedia
+          ? h('a', { class: 'btn', href: 'game.html?id=' + gameBab.id }, 'Main ' + gameBab.nama)
+          : h('span', { class: 'lencana' }, 'Segera')) : null].filter(Boolean));
     return;
   }
 
@@ -60,7 +67,8 @@
   document.title = 'Materi Kelas ' + kelasDipilih + ' | MathLife';
 
   const tab = h('nav', { class: 'tab-kelas', 'aria-label': 'Pilih kelas' }, [7, 8, 9].map((k) =>
-    h('a', { href: 'materi.html?kelas=' + k, 'aria-current': k === kelasDipilih ? 'page' : null }, 'Kelas ' + k)));
+    h('a', { href: 'materi.html?kelas=' + k, 'aria-current': k === kelasDipilih ? 'page' : null },
+      'Kelas ' + k, k === kelasSaya ? h('span', { class: 'kelasmu' }, 'Kelasmu') : null)));
 
   const kartu = dataKelas.bab.map((b) => {
     const ada = window.babTersedia(b);
@@ -78,7 +86,9 @@
 
   app.replaceChildren(
     h('h1', null, 'Materi matematika SMP'),
-    h('p', { class: 'redup' }, 'Pilih kelas, lalu pilih bab. Bab yang belum siap ditandai Segera.'),
+    h('p', { class: 'redup' }, kelasSaya
+      ? 'Kamu di kelas ' + kelasSaya + '. Materi kelas lain tetap bisa dibuka untuk mengulang atau belajar lebih maju. Bab yang belum siap ditandai Segera.'
+      : 'Pilih kelas, lalu pilih bab. Bab yang belum siap ditandai Segera.'),
     tab,
     h('div', { class: 'grid-bab' }, kartu));
 })();

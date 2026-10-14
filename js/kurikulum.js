@@ -58,3 +58,13 @@ window.cariSubbab = function (idSub) {
   }
   return null;
 };
+
+// Daftar game besar (berdiri sendiri). tersedia: true berarti file js/games/<id>.js sudah ada.
+window.DAFTAR_GAME = [
+  { id: 'math-bank', nama: 'Math Bank', bab: 'Kelas 7 \u00B7 Bab 1', topik: 'Bilangan bulat, persen, pecahan, desimal, dan bunga tunggal', tersedia: true },
+  { id: 'mall-simulator', nama: 'Mall Simulator', bab: 'Kelas 7 \u00B7 Bab 2 dan Kelas 8 \u00B7 Bab 2', topik: 'Diskon, pajak, untung-rugi, dan SPLDV', tersedia: false },
+  { id: 'build-it', nama: 'Build It!', bab: 'Kelas 7 \u00B7 Bab 4, Kelas 8 \u00B7 Bab 3, Kelas 9 \u00B7 Bab 3', topik: 'Luas, keliling, dan volume', tersedia: false },
+  { id: 'math-trip', nama: 'Math Trip', bab: 'Kelas 8 \u00B7 Bab 4', topik: 'Koordinat, garis lurus, dan transformasi', tersedia: false },
+  { id: 'data-detective', nama: 'Data Detective', bab: 'Kelas 7 \u00B7 Bab 5 dan Kelas 9 \u00B7 Bab 4', topik: 'Statistika dan peluang', tersedia: false },
+  { id: 'equation-puzzle', nama: 'Equation Puzzle', bab: 'Kelas 7 \u00B7 Bab 3 dan Kelas 9 \u00B7 Bab 1', topik: 'Aljabar dan persamaan', tersedia: false }
+];

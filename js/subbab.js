@@ -395,7 +395,7 @@
     const lencana = selesai && lat >= 70 && ev >= 70;
     const baris = (nama, nilai) => h('div', { class: 'ringkas-baris' }, h('span', null, nama), h('strong', null, nilai));
 
-    wadahProgres.replaceChildren(
+    wadahProgres.replaceChildren(...[
       baris('Materi selesai', selesai ? 'Ya' : 'Belum'),
       baris('Latihan benar', benarDari(idLatihan.flat()) + '/' + idLatihan.flat().length + ' (' + lat + '%)'),
       baris('MathLife Challenge', benarDari(tantangan) + '/' + tantangan.length),
@@ -407,7 +407,7 @@
         h('strong', null, K.badge.nama),
         h('p', null, lencana ? 'Lencana terbuka. Hebat!' : K.badge.syarat)),
       selesai ? null : h('button', { type: 'button', class: 'btn', onclick: () => simpan('selesai', 1, 20) }, 'Tandai materi selesai (+20 XP)'),
-      h('p', null, h('a', { href: 'materi.html?bab=' + meta.bab.id }, 'Kembali ke bab')));
+      h('p', null, h('a', { href: 'materi.html?bab=' + meta.bab.id }, 'Kembali ke bab'))].filter(Boolean));
   }
 
   // ---------- Susun halaman: satu langkah per layar ----------
