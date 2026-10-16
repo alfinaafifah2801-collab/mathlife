@@ -232,5 +232,10 @@
     baru();
   }
 
-  menuLevel();
+  // Game dengan tampilan sendiri (misalnya Mall Simulator) menjalankan menunya sendiri.
+  if (typeof game.custom === 'function') {
+    game.custom({ app, h, parseAngka, simpanSkor, terbaik, punyaPaket, pengajar });
+  } else {
+    menuLevel();
+  }
 })();

@@ -117,6 +117,11 @@
   }
 
   // ---------- Soal ----------
+  function acak(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i -= 1) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+    return a;
+  }
   function soal(item, nomor) {
     const lama = hasil.get(item.id);
     let nilai = null;
@@ -143,9 +148,11 @@
       kotak.append(h('p', { class: 'soal-teks' }, (nomor ? nomor + '. ' : '') + item.soal), jawabanku, h('div', { class: 'baris-form' }, buka), kunci, umpan);
     } else {
       if (item.tipe === 'pilgan' || item.tipe === 'bs') {
+        // Urutan pilihan diacak tiap dimuat, supaya jawaban benar tidak selalu di posisi yang sama.
+        const urut = item.tipe === 'pilgan' && !item.tetap ? acak(item.opsi.map((t, i) => ({ t, i }))) : (item.opsi || []).map((t, i) => ({ t, i }));
         const daftarOpsi = item.tipe === 'bs'
           ? [{ t: 'Benar', v: true }, { t: 'Salah', v: false }]
-          : item.opsi.map((t, i) => ({ t: String.fromCharCode(65 + i) + '. ' + t, v: i }));
+          : urut.map((o, k) => ({ t: String.fromCharCode(65 + k) + '. ' + o.t, v: o.i }));
         const tombolOpsi = daftarOpsi.map((o) => h('button', {
           type: 'button', class: 'opsi', 'aria-pressed': 'false',
           onclick: () => { nilai = o.v; tombolOpsi.forEach((b, j) => b.setAttribute('aria-pressed', String(daftarOpsi[j].v === o.v))); }
@@ -187,8 +194,11 @@
       }
       tombol.addEventListener('click', periksa);
 
+      const kepalaKerja = item.kerjaan
+        ? h('div', { class: 'salah-kerjaan' }, item.kerjaan.flatMap((l, i) => [i ? h('br') : null, l]).filter(Boolean))
+        : null;
       kotak.append(...[
-        item.kepala,
+        item.kepala || kepalaKerja,
         h('p', { class: 'soal-teks' }, (nomor ? nomor + '. ' : '') + item.soal),
         kontrol, h('div', { class: 'baris-form' }, tombol, lihat), umpan, bahas
       ].filter(Boolean));
@@ -217,8 +227,30 @@
         h('h3', null, b.judul),
         h('dl', null, [['Diketahui', b.diketahui], ['Ditanya', b.ditanya], ['Strategi', b.strategi], ['Hitung', b.hitung], ['Periksa', b.periksa]]
           .flatMap(([k, v]) => [h('dt', null, k), h('dd', null, v)])));
+      case 'langkah': return langkahBertahap(b);
+      case 'tautan': return h('div', { class: 'kotak kotak-mint' }, b.judul ? h('strong', null, b.judul) : null, h('p', null, b.x),
+        h('a', { class: 'btn btn-kecil', href: b.href }, b.label));
       default: return null;
     }
+  }
+
+  // Contoh bertahap yang langkahnya dibuka satu per satu.
+  function langkahBertahap(b) {
+    const daftarLangkah = b.steps.map((st, i) => h('li', { class: 'langkah-item', hidden: i > 0 },
+      h('strong', null, st.lab), h('p', null, st.body)));
+    let terbuka = 1;
+    const info = h('p', { class: 'redup catatan-kecil' });
+    const lanjut = h('button', { type: 'button', class: 'btn btn-kecil', onclick: () => {
+      daftarLangkah[terbuka].hidden = false; terbuka += 1; segar();
+    } }, 'Tampilkan langkah berikutnya');
+    function segar() {
+      lanjut.hidden = terbuka >= daftarLangkah.length;
+      info.textContent = terbuka >= daftarLangkah.length ? 'Semua langkah sudah tampil.' : 'Langkah ' + terbuka + ' dari ' + daftarLangkah.length + '.';
+    }
+    segar();
+    return h('div', { class: 'contoh' }, h('h3', null, b.judul),
+      b.soal ? h('div', { class: 'kotak kotak-krem' }, h('p', null, b.soal)) : null,
+      h('ol', { class: 'langkah-daftar' }, daftarLangkah), info, lanjut);
   }
   const blokSemua = (arr) => arr.map(blok);
 
@@ -368,11 +400,11 @@
 
   // ---------- Daftar id untuk ringkasan ----------
   const idLatihan = K.latihan.map((l) => l.soal.map((s) => s.id));
-  const idMini = K.mini.map((s) => s.id);
-  const idEval = K.evaluasi.flatMap((g) => g.soal.map((s) => s.id));
-  const idGame = K.game ? K.game.babak.map((b) => b.id) : [];
+  const idMini = (K.mini || []).map((s) => s.id);
+  const idEval = (K.evaluasi || []).flatMap((g) => g.soal.map((s) => s.id));
+  const idGame = K.game && K.game.babak ? K.game.babak.map((b) => b.id) : [];
   const idSim = K.simulator ? K.simulator.misi.map((m) => m.id) : [];
-  const idNyata = (K.nyata.soal || []).map((s) => s.id);
+  const idNyata = ((K.nyata && K.nyata.soal) || []).map((s) => s.id);
   const semuaId = [...idNyata, ...idMini, ...idGame, ...idSim, ...idLatihan.flat(), ...idEval];
 
   const benarDari = (ids) => ids.filter((i) => (hasil.get(i) || {}).score === 1).length;
@@ -392,16 +424,16 @@
     const lat = persen(idLatihan.flat());
     const ev = persen(idEval);
     const tantangan = idLatihan[idLatihan.length - 1];
-    const lencana = selesai && lat >= 70 && ev >= 70;
+    const lencana = selesai && lat >= 70 && (idEval.length ? ev >= 70 : true);
     const baris = (nama, nilai) => h('div', { class: 'ringkas-baris' }, h('span', null, nama), h('strong', null, nilai));
 
     wadahProgres.replaceChildren(...[
       baris('Materi selesai', selesai ? 'Ya' : 'Belum'),
       baris('Latihan benar', benarDari(idLatihan.flat()) + '/' + idLatihan.flat().length + ' (' + lat + '%)'),
       baris('MathLife Challenge', benarDari(tantangan) + '/' + tantangan.length),
-      baris('Mini Challenge', benarDari(idMini) + '/' + idMini.length),
+      idMini.length ? baris('Mini Challenge', benarDari(idMini) + '/' + idMini.length) : null,
       idGame.length + idSim.length ? baris('Game dan Simulator', benarDari([...idGame, ...idSim]) + '/' + (idGame.length + idSim.length)) : null,
-      baris('Evaluasi benar', benarDari(idEval) + '/' + idEval.length + ' (' + ev + '%)'),
+      idEval.length ? baris('Evaluasi benar', benarDari(idEval) + '/' + idEval.length + ' (' + ev + '%)') : null,
       baris('Total XP', String(totalXp())),
       h('div', { class: 'lencana-kotak' + (lencana ? ' terbuka' : '') },
         h('strong', null, K.badge.nama),
@@ -429,16 +461,16 @@
   }
 
   // Tahap Materi
-  tambah('kenalan', 'materi', null, ...blokSemua(K.kenalan));
-  tambah('nyata', 'materi', null, ...blokSemua(K.nyata.blok), ...daftarSoal(K.nyata.soal || [], 1));
+  if (K.kenalan) tambah('kenalan', 'materi', null, ...blokSemua(K.kenalan));
+  if (K.nyata) tambah('nyata', 'materi', null, ...blokSemua(K.nyata.blok), ...daftarSoal(K.nyata.soal || [], 1));
   tambah('konsep', 'materi', null, ...blokSemua(K.konsep));
   tambah('contoh', 'materi', null, ...blokSemua(K.contoh));
   // Tahap Pengerjaan
-  tambah('mini', 'kerja', null, h('p', { class: 'redup' }, 'Soal-soal yang sedikit beda dari biasanya. Santai saja, boleh dicoba berkali-kali.'), ...daftarSoal(K.mini, 1));
-  if (K.game) tambah('game', 'kerja', null, ...(K.game.jenis === 'misi' ? gameMisi(K.game) : gameBank(K.game)));
+  if (K.mini && K.mini.length) tambah('mini', 'kerja', null, h('p', { class: 'redup' }, 'Soal-soal yang sedikit beda dari biasanya. Santai saja, boleh dicoba berkali-kali.'), ...daftarSoal(K.mini, 1));
+  if (K.game) tambah('game', 'kerja', null, ...(K.game.jenis === 'tautan' ? [blok(K.game.tautan)] : K.game.jenis === 'misi' ? gameMisi(K.game) : gameBank(K.game)));
   if (K.simulator) tambah('simulator', 'kerja', null, ...(K.simulator.jenis === 'persen' ? simulatorPersen(K.simulator) : simulatorLift(K.simulator)));
   K.latihan.forEach((lv) => tambah('latihan', 'kerja', lv.nama, lv.pengantar ? h('p', { class: 'redup' }, lv.pengantar) : null, ...daftarSoal(lv.soal, 1)));
-  K.evaluasi.forEach((g) => tambah('evaluasi', 'kerja', g.judul, ...daftarSoal(g.soal, 1)));
+  (K.evaluasi || []).forEach((g) => tambah('evaluasi', 'kerja', g.judul, ...daftarSoal(g.soal, 1)));
   tambah('progres', 'kerja', null, wadahProgres);
 
   const jumlah = halaman.length;

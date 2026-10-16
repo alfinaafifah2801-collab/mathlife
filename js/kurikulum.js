@@ -24,7 +24,20 @@ window.KURIKULUM = [
     kelas: 8,
     bab: [
       { id: 'k8-b1', no: 1, judul: 'Bilangan & Pola', cakupan: 'Perpangkatan, bentuk akar, pola bilangan' },
-      { id: 'k8-b2', no: 2, judul: 'Relasi, Fungsi & Persamaan', cakupan: 'Fungsi, grafik, persamaan garis lurus, SPLDV', game: 'Mall Simulator' },
+      {
+        id: 'k8-b2', no: 2, judul: 'Relasi, Fungsi & Persamaan', cakupan: 'Fungsi, grafik, persamaan garis lurus, SPLDV', game: 'Mall Simulator',
+        subbab: [
+          { id: 'k8-b2-s1', no: '2.1', judul: 'Relasi dan Fungsi', tersedia: false },
+          { id: 'k8-b2-s2', no: '2.2', judul: 'Grafik Fungsi', tersedia: false },
+          { id: 'k8-b2-s3', no: '2.3', judul: 'Persamaan Garis Lurus', tersedia: false },
+          { id: 'k8-b2-s4', no: '2.4', judul: 'Mengenal SPLDV', tersedia: true },
+          { id: 'k8-b2-s5', no: '2.5', judul: 'SPLDV dengan Metode Grafik', tersedia: true },
+          { id: 'k8-b2-s6', no: '2.6', judul: 'SPLDV dengan Metode Substitusi', tersedia: true },
+          { id: 'k8-b2-s7', no: '2.7', judul: 'SPLDV dengan Metode Eliminasi', tersedia: true },
+          { id: 'k8-b2-s8', no: '2.8', judul: 'SPLDV dengan Metode Campuran', tersedia: true },
+          { id: 'k8-b2-s9', no: '2.9', judul: 'SPLDV dalam Kehidupan', tersedia: true }
+        ]
+      },
       { id: 'k8-b3', no: 3, judul: 'Geometri', cakupan: 'Pythagoras, lingkaran, bangun ruang', game: 'Build It!' },
       { id: 'k8-b4', no: 4, judul: 'Transformasi', cakupan: 'Translasi, refleksi, rotasi, dilatasi', game: 'Math Trip' },
       { id: 'k8-b5', no: 5, judul: 'Statistika & Peluang', cakupan: 'Analisis data dan peluang', game: 'Data Detective' }
@@ -62,7 +75,7 @@ window.cariSubbab = function (idSub) {
 // Daftar game besar (berdiri sendiri). tersedia: true berarti file js/games/<id>.js sudah ada.
 window.DAFTAR_GAME = [
   { id: 'math-bank', nama: 'Math Bank', bab: 'Kelas 7 \u00B7 Bab 1', topik: 'Bilangan bulat, persen, pecahan, desimal, dan bunga tunggal', tersedia: true },
-  { id: 'mall-simulator', nama: 'Mall Simulator', bab: 'Kelas 7 \u00B7 Bab 2 dan Kelas 8 \u00B7 Bab 2', topik: 'Diskon, pajak, untung-rugi, dan SPLDV', tersedia: false },
+  { id: 'mall-simulator', nama: 'Mall Simulator', bab: 'Kelas 7 \u00B7 Bab 2 dan Kelas 8 \u00B7 Bab 2', topik: 'Diskon, pajak, untung-rugi, dan SPLDV', tersedia: true },
   { id: 'build-it', nama: 'Build It!', bab: 'Kelas 7 \u00B7 Bab 4, Kelas 8 \u00B7 Bab 3, Kelas 9 \u00B7 Bab 3', topik: 'Luas, keliling, dan volume', tersedia: false },
   { id: 'math-trip', nama: 'Math Trip', bab: 'Kelas 8 \u00B7 Bab 4', topik: 'Koordinat, garis lurus, dan transformasi', tersedia: false },
   { id: 'data-detective', nama: 'Data Detective', bab: 'Kelas 7 \u00B7 Bab 5 dan Kelas 9 \u00B7 Bab 4', topik: 'Statistika dan peluang', tersedia: false },

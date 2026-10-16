@@ -306,3 +306,22 @@ a.kartu-bab:hover { border-color: var(--ml-blue); }
 .gelembung .tanya { font-weight: 700; color: var(--ml-navy); margin-top: .6rem; }
 .hasil-shift { max-width: 520px; }
 .bintang { font-size: 2.2rem; color: var(--ml-yellow); letter-spacing: .2rem; margin: 0 0 .5rem; }
+
+/* ---------- Contoh bertahap dan kerja salah ---------- */
+.langkah-daftar { list-style: none; margin: 0 0 .6rem; padding: 0; }
+.langkah-item { border: 2px solid var(--ml-lavender); background: #fff; border-radius: 12px; padding: .6rem .9rem; margin-bottom: .5rem; }
+.langkah-item p { margin: .2rem 0 0; }
+.salah-kerjaan { font-family: ui-monospace, Menlo, Consolas, monospace; background: #fff; border: 2px dashed var(--ml-coral); border-radius: 12px; padding: .6rem .9rem; margin: 0 0 .7rem; line-height: 1.9; }
+
+/* ---------- Mall Simulator ---------- */
+.belanja-tata { display: grid; gap: 1rem; }
+.keranjang { align-self: start; }
+.toko-kartu { text-align: left; cursor: pointer; font: inherit; width: 100%; }
+.toko-ikon { font-size: 1.8rem; line-height: 1.2; }
+.produk { background: #fff; border: 2px solid var(--ml-lavender); border-radius: 16px; padding: .8rem 1rem; }
+.produk .harga { margin: .3rem 0 .6rem; }
+.coret { text-decoration: line-through; color: #6B6A8F; }
+.misi-chip { font-size: .85rem; font-weight: 600; background: var(--ml-lavender); border-radius: 999px; padding: .1rem .7rem; }
+.misi-chip.ok { background: var(--ml-mint); color: #0E5A3C; }
+.nota-wadah { display: grid; gap: .8rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); margin: .6rem 0 1rem; }
+@media (min-width: 820px) { .belanja-tata { grid-template-columns: 1fr 320px; } }
