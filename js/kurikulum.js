@@ -48,7 +48,14 @@ window.KURIKULUM = [
     bab: [
       { id: 'k9-b1', no: 1, judul: 'Aljabar Lanjutan', cakupan: 'Persamaan kuadrat dan fungsi kuadrat', game: 'Equation Puzzle' },
       { id: 'k9-b2', no: 2, judul: 'Barisan & Pola', cakupan: 'Barisan aritmetika dan geometri' },
-      { id: 'k9-b3', no: 3, judul: 'Geometri Lanjutan', cakupan: 'Kesebangunan, kekongruenan, bangun ruang sisi lengkung', game: 'Build It!' },
+      {
+        id: 'k9-b3', no: 3, judul: 'Geometri Lanjutan', cakupan: 'Kesebangunan, kekongruenan, bangun ruang sisi lengkung', game: 'Build It!',
+        subbab: [
+          { id: 'k9-b3-s1', no: '3.1', judul: 'Kesebangunan', tersedia: true },
+          { id: 'k9-b3-s2', no: '3.2', judul: 'Kekongruenan', tersedia: true },
+          { id: 'k9-b3-s3', no: '3.3', judul: 'Bangun Ruang Sisi Lengkung', tersedia: true }
+        ]
+      },
       { id: 'k9-b4', no: 4, judul: 'Statistika & Peluang', cakupan: 'Analisis data dan peluang', game: 'Data Detective' },
       { id: 'k9-b5', no: 5, judul: 'Pemecahan Masalah', cakupan: 'Soal kontekstual dan latihan campuran' }
     ]
@@ -76,7 +83,7 @@ window.cariSubbab = function (idSub) {
 window.DAFTAR_GAME = [
   { id: 'math-bank', nama: 'Math Bank', bab: 'Kelas 7 \u00B7 Bab 1', topik: 'Bilangan bulat, persen, pecahan, desimal, dan bunga tunggal', tersedia: true },
   { id: 'mall-simulator', nama: 'Mall Simulator', bab: 'Kelas 7 \u00B7 Bab 2 dan Kelas 8 \u00B7 Bab 2', topik: 'Diskon, pajak, untung-rugi, dan SPLDV', tersedia: true },
-  { id: 'build-it', nama: 'Build It!', bab: 'Kelas 7 \u00B7 Bab 4, Kelas 8 \u00B7 Bab 3, Kelas 9 \u00B7 Bab 3', topik: 'Luas, keliling, dan volume', tersedia: false },
+  { id: 'build-it', nama: 'Build It!', bab: 'Kelas 7 \u00B7 Bab 4, Kelas 8 \u00B7 Bab 3, Kelas 9 \u00B7 Bab 3', topik: 'Luas, keliling, dan volume', tersedia: true },
   { id: 'math-trip', nama: 'Math Trip', bab: 'Kelas 8 \u00B7 Bab 4', topik: 'Koordinat, garis lurus, dan transformasi', tersedia: false },
   { id: 'data-detective', nama: 'Data Detective', bab: 'Kelas 7 \u00B7 Bab 5 dan Kelas 9 \u00B7 Bab 4', topik: 'Statistika dan peluang', tersedia: false },
   { id: 'equation-puzzle', nama: 'Equation Puzzle', bab: 'Kelas 7 \u00B7 Bab 3 dan Kelas 9 \u00B7 Bab 1', topik: 'Aljabar dan persamaan', tersedia: false }

@@ -116,7 +116,7 @@
     const game = [
       ['Mall Simulator', 'Diskon, pajak, dan SPLDV', 'mall-simulator'],
       ['Math Bank', 'Bilangan, persen, dan bunga', 'math-bank'],
-      ['Build It!', 'Luas, keliling, dan volume'],
+      ['Build It!', 'Luas, keliling, dan volume', 'build-it'],
       ['Math Trip', 'Koordinat dan garis lurus'],
       ['Data Detective', 'Statistika dan peluang'],
       ['Equation Puzzle', 'Aljabar dan persamaan']

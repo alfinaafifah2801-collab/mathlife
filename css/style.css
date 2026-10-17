@@ -325,3 +325,8 @@ a.kartu-bab:hover { border-color: var(--ml-blue); }
 .misi-chip.ok { background: var(--ml-mint); color: #0E5A3C; }
 .nota-wadah { display: grid; gap: .8rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); margin: .6rem 0 1rem; }
 @media (min-width: 820px) { .belanja-tata { grid-template-columns: 1fr 320px; } }
+
+/* ---------- Simulator skala ---------- */
+.sim-bangun { display: flex; gap: 1.5rem; align-items: flex-end; overflow-x: auto; padding: .5rem 0 1rem; max-width: 100%; }
+.bangun { background: var(--ml-lavender); border: 3px solid var(--ml-navy); border-radius: 6px; transition: width .15s, height .15s; }
+.bangun.baru { background: #FFF1CC; border-color: #B35A00; }

@@ -398,6 +398,66 @@
     ];
   }
 
+  // ---------- MathLife Simulator (jenis 'skala'): dua persegi panjang sebangun ----------
+  function simulatorSkala(cfg) {
+    let indeks = 0;
+    let selesaiMisi = false;
+    const satuan = cfg.satuan || 'cm';
+    const UNIT = 18;
+    const fmt = (n) => Number(n).toLocaleString('id-ID', { maximumFractionDigits: 2 });
+    const geser = h('input', { type: 'range', min: '0.5', max: '4', step: '0.5', value: '1', 'aria-label': 'Faktor skala' });
+    const nilaiK = h('strong', { class: 'nilai-persen' });
+    const asli = h('div', { class: 'bangun' });
+    const baru = h('div', { class: 'bangun baru' });
+    const infoAsli = h('p', { class: 'redup catatan-kecil' });
+    const infoBaru = h('p', { class: 'rumus' });
+    const pesan = h('div', { 'aria-live': 'polite' });
+    const misiInfo = h('p', { class: 'misi-info' });
+    const lanjut = h('button', { type: 'button', class: 'btn btn-kecil', hidden: true, onclick: () => { indeks = (indeks + 1) % cfg.misi.length; mulai(); } }, 'Misi berikutnya');
+
+    function gambar() {
+      const k = Number(geser.value);
+      const m = cfg.misi[indeks];
+      const p = cfg.p * k;
+      const l = cfg.l * k;
+      const luas = p * l;
+      nilaiK.textContent = fmt(k) + ' kali';
+      asli.style.width = cfg.p * UNIT + 'px'; asli.style.height = cfg.l * UNIT + 'px';
+      baru.style.width = p * UNIT + 'px'; baru.style.height = l * UNIT + 'px';
+      infoAsli.textContent = 'Bangun asli: ' + fmt(cfg.p) + ' \u00D7 ' + fmt(cfg.l) + ' ' + satuan + ', luas ' + fmt(cfg.p * cfg.l) + ' ' + satuan + '\u00B2';
+      infoBaru.textContent = fmt(p) + ' \u00D7 ' + fmt(l) + ' ' + satuan + ' \u2192 luas ' + fmt(luas) + ' ' + satuan + '\u00B2';
+      const nilaiSekarang = m.target === 'p' ? p : m.target === 'l' ? l : luas;
+      if (!selesaiMisi && Math.abs(nilaiSekarang - m.nilai) < 1e-9) {
+        selesaiMisi = true;
+        pesan.replaceChildren(h('span', { class: 'benar-teks' }, 'Tepat! Faktor skala ' + fmt(k) + '. Sisi dikali ' + fmt(k) + ', luas dikali ' + fmt(k * k) + '. +10 XP'));
+        simpan(m.id, 1, 10);
+        lanjut.hidden = false;
+      } else if (!selesaiMisi) {
+        pesan.replaceChildren();
+      }
+    }
+    function mulai() {
+      const m = cfg.misi[indeks];
+      selesaiMisi = false;
+      geser.value = '1';
+      misiInfo.textContent = 'Misi ' + (indeks + 1) + ': ' + m.teks;
+      lanjut.hidden = true;
+      gambar();
+    }
+    geser.addEventListener('input', gambar);
+    mulai();
+    return [
+      h('p', null, cfg.cerita),
+      misiInfo,
+      h('div', { class: 'sim-bangun' },
+        h('div', null, asli, h('p', { class: 'redup catatan-kecil' }, 'Asli')),
+        h('div', null, baru, h('p', { class: 'redup catatan-kecil' }, 'Hasil skala'))),
+      h('div', { class: 'sim-kontrol' },
+        h('label', { class: 'field' }, h('span', null, 'Faktor skala: ', nilaiK), geser),
+        infoAsli, infoBaru, pesan, lanjut)
+    ];
+  }
+
   // ---------- Daftar id untuk ringkasan ----------
   const idLatihan = K.latihan.map((l) => l.soal.map((s) => s.id));
   const idMini = (K.mini || []).map((s) => s.id);
@@ -468,7 +528,7 @@
   // Tahap Pengerjaan
   if (K.mini && K.mini.length) tambah('mini', 'kerja', null, h('p', { class: 'redup' }, 'Soal-soal yang sedikit beda dari biasanya. Santai saja, boleh dicoba berkali-kali.'), ...daftarSoal(K.mini, 1));
   if (K.game) tambah('game', 'kerja', null, ...(K.game.jenis === 'tautan' ? [blok(K.game.tautan)] : K.game.jenis === 'misi' ? gameMisi(K.game) : gameBank(K.game)));
-  if (K.simulator) tambah('simulator', 'kerja', null, ...(K.simulator.jenis === 'persen' ? simulatorPersen(K.simulator) : simulatorLift(K.simulator)));
+  if (K.simulator) tambah('simulator', 'kerja', null, ...(K.simulator.jenis === 'persen' ? simulatorPersen(K.simulator) : K.simulator.jenis === 'skala' ? simulatorSkala(K.simulator) : simulatorLift(K.simulator)));
   K.latihan.forEach((lv) => tambah('latihan', 'kerja', lv.nama, lv.pengantar ? h('p', { class: 'redup' }, lv.pengantar) : null, ...daftarSoal(lv.soal, 1)));
   (K.evaluasi || []).forEach((g) => tambah('evaluasi', 'kerja', g.judul, ...daftarSoal(g.soal, 1)));
   tambah('progres', 'kerja', null, wadahProgres);

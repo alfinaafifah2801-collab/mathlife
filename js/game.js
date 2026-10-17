@@ -122,6 +122,7 @@
 
   // ---------- Satu shift permainan ----------
   function main(lv, indeksLevel) {
+    const I = Object.assign({ pelanggan: 'Nasabah', berikutnya: 'Nasabah berikutnya', selesai: 'Shift selesai!', pembuka: 'berkata:' }, game.istilah || {});
     const S = { i: 0, koin: 0, benar: 0, beruntun: 0, percobaan: 0, soal: null, nasabah: '', terakhir: '' };
     const atas = h('div', { class: 'game-info', 'aria-live': 'polite' });
     const isiGaris = h('span');
@@ -136,12 +137,12 @@
     const awalan = h('span', { class: 'satuan' });
     const akhiran = h('span', { class: 'satuan' });
     const jawabBtn = h('button', { type: 'button', class: 'btn', onclick: () => periksa() }, 'Jawab');
-    const lanjutBtn = h('button', { type: 'button', class: 'btn', hidden: true, onclick: () => lanjut() }, 'Nasabah berikutnya');
+    const lanjutBtn = h('button', { type: 'button', class: 'btn', hidden: true, onclick: () => lanjut() }, I.berikutnya);
     const baris = h('div', { class: 'baris-form isian' }, awalan, masuk, akhiran, jawabBtn, lanjutBtn);
 
     function perbaruiAtas() {
       atas.replaceChildren(...[
-        h('span', null, lv.nama), h('span', null, 'Nasabah ', h('strong', null, Math.min(S.i + 1, game.jumlah) + '/' + game.jumlah)),
+        h('span', null, lv.nama), h('span', null, I.pelanggan + ' ', h('strong', null, Math.min(S.i + 1, game.jumlah) + '/' + game.jumlah)),
         h('span', null, 'Koin ', h('strong', null, S.koin)),
         S.beruntun >= 2 ? h('span', { class: 'api' }, 'Beruntun ' + S.beruntun) : null
       ].filter(Boolean));
@@ -155,8 +156,9 @@
       kartu.replaceChildren(
         h('div', { class: 'avatar', 'aria-hidden': 'true' }, S.nasabah.slice(-1) === ' ' ? '?' : S.nasabah.split(' ').pop().charAt(0)),
         h('div', { class: 'gelembung' },
-          h('strong', null, S.nasabah + ' berkata:'),
+          h('strong', null, S.nasabah + ' ' + I.pembuka),
           ...s.narasi.map((t) => h('p', null, t)),
+          ...(s.gambar ? [h('div', { class: 'gambar-wadah' }, s.gambar)] : []),
           h('p', { class: 'tanya' }, s.tanya)));
       awalan.textContent = s.satuan === 'Rp' ? 'Rp' : '';
       akhiran.textContent = s.satuan === '%' ? '%' : '';
@@ -174,7 +176,7 @@
 
     function selesaiSoal() {
       masuk.disabled = true; jawabBtn.hidden = true; lanjutBtn.hidden = false;
-      lanjutBtn.textContent = S.i + 1 >= game.jumlah ? 'Lihat hasil shift' : 'Nasabah berikutnya';
+      lanjutBtn.textContent = S.i + 1 >= game.jumlah ? 'Lihat hasil shift' : I.berikutnya;
       lanjutBtn.focus({ preventScroll: true });
       perbaruiAtas();
     }
@@ -212,7 +214,7 @@
       const bukaBerikut = berikut && S.koin >= AMBANG && (berikut.gratis || punyaPaket);
       app.replaceChildren(
         h('div', { class: 'hasil-shift' },
-          h('h1', null, 'Shift selesai!'),
+          h('h1', null, I.selesai),
           h('p', { class: 'bintang', 'aria-label': bintang + ' dari 3 bintang' }, '\u2605'.repeat(bintang) + '\u2606'.repeat(3 - bintang)),
           h('div', { class: 'ringkas-baris' }, h('span', null, 'Koin'), h('strong', null, S.koin)),
           h('div', { class: 'ringkas-baris' }, h('span', null, 'Jawaban benar'), h('strong', null, S.benar + '/' + game.jumlah)),
