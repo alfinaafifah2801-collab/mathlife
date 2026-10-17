@@ -115,10 +115,64 @@ window.GAMES = window.GAMES || {};
       petunjuk: 'Volume kerucut = ⅓ × π × r × r × tinggi.', bahas: ['Volume = ⅓ × 22/7 × 7 × 7 × ' + t + ' = ' + v + ' cm³.'], p: { jenis: 'volumeKerucut', t } };
   }
 
+
+  // ---------- Tampilan game: tema proyek bangunan ----------
+  const AVATAR = ['👷', '👷‍♀️', '🧑‍🔧', '👩‍🔧', '🧑‍🏭', '👨‍💼', '👩‍💼', '🧑‍🌾'];
+  const UCAP_BENAR = ['Pondasi kuat!', 'Hitunganmu presisi!', 'Satu lantai jadi!', 'Klien senang!'];
+  function adeganBangun(S) {
+    const FX = window.GameFX;
+    const h = ML.h;
+    const mathy = FX.mathy(84);
+    const puncak = h('div', { class: 'gx-puncak', 'aria-hidden': 'true' }, '🏗️');
+    const lantai = Array.from({ length: 10 }, () => h('div', { class: 'gx-lantai' }));
+    const gedung = h('div', { class: 'gx-gedung', role: 'img', 'aria-label': 'Progres bangunan' }, lantai);
+    const el = h('div', { class: 'gx-gedung-wadah' }, mathy.el, h('div', null, puncak, gedung, h('small', null, 'Progres bangunan')));
+    return {
+      el,
+      perbarui(st, aksi) {
+        lantai.forEach((l, i) => {
+          const r = st.riwayat[i];
+          const kelas = 'gx-lantai' + (r === 'ok' ? ' jadi' : r === 'gagal' ? ' retak' : '');
+          if (l.className !== kelas) { l.className = kelas; l.textContent = r === 'ok' ? '🧱' : r === 'gagal' ? '💥' : ''; }
+        });
+        const jadi = st.riwayat.filter((x) => x === 'ok').length;
+        puncak.textContent = st.riwayat.length >= lantai.length ? (jadi >= 7 ? '🏢' : '🏚️') : '🏗️';
+        if (aksi === 'mulai') mathy.set('senang', st.i === 0 ? 'Ayo mulai membangun!' : 'Proyek baru datang!');
+        else if (aksi === 'benar') mathy.set(st.beruntun >= 3 ? 'hebat' : 'girang', FX.pilihAcak(UCAP_BENAR));
+        else if (aksi === 'salah1') mathy.set('mikir', 'Cek lagi angka di gambar.');
+        else if (aksi === 'gagal') mathy.set('sedih', 'Lantai ini retak. Pelajari pembahasannya.');
+        else if (aksi === 'pangkat') mathy.set('hebat', 'Pangkatmu naik!');
+      }
+    };
+  }
+  const TEMA = {
+    id: 'bangun',
+    avatar: AVATAR,
+    hadiah: '🧱',
+    nyawa: 0,
+    sabar: null,
+    jabatan: ['Pekerja Baru', 'Tukang Andal', 'Mandor Muda', 'Kepala Proyek'],
+    kata: {
+      pelanggan: 'Proyek', berkata: 'meminta bantuan:', lanjut: 'Proyek berikutnya', lihatHasil: 'Lihat hasil shift',
+      antrean: 'Proyek menunggu', terakhir: 'Proyek terakhir!', pergi: '',
+      selesaiJudul: 'Shift selesai!', gugurJudul: 'Shift berakhir', gugurIsi: ''
+    },
+    adegan: adeganBangun
+  };
+  const LENCANA = [
+    { id: 'pertama', ikon: '🧰', nama: 'Proyek Perdana', syarat: 'Selesaikan 1 shift' },
+    { id: 'beruntun5', ikon: '🔥', nama: 'Tukang Beruntun', syarat: '5 proyek benar berturut-turut di percobaan pertama' },
+    { id: 'kilat', ikon: '⚡', nama: 'Tukang Kilat', syarat: 'Jawab benar dalam 8 detik, 3 kali dalam satu shift' },
+    { id: 'sempurna', ikon: '💎', nama: 'Bangunan Sempurna', syarat: '10 proyek benar semua di percobaan pertama' },
+    { id: 'tigabintang', ikon: '🌟', nama: 'Bintang Tiga', syarat: 'Raih 3 bintang dalam satu shift' },
+    { id: 'naikjabatan', ikon: '🎖️', nama: 'Naik Jabatan', syarat: 'Lulus satu level dan buka level berikutnya' },
+    { id: 'tamat', ikon: '🏛️', nama: 'Arsitek Handal', syarat: 'Lulus level terakhir' }
+  ];
+
   window.GAMES['build-it'] = {
     nama: 'Build It!',
     pengantar: 'Kamu kontraktor. Setiap shift ada 10 proyek, masing-masing dengan gambar bangun dan satu soal luas, keliling, atau volume. Gambar tidak sesuai skala, jadi pakai angka yang tertulis.',
-    aturan: 'Jawaban benar di percobaan pertama: 10 koin. Percobaan kedua: 5 koin. Tiga jawaban benar berturut-turut menambah bonus 5 koin. Tulis jawaban dalam angka saja.',
+    aturan: 'Jawaban benar di percobaan pertama: 10 koin. Percobaan kedua: 5 koin. Tiga jawaban benar berturut-turut menambah bonus 5 koin. Setiap proyek yang benar menambah satu lantai pada bangunanmu. Tulis jawaban dalam angka saja (satuan sudah tertulis di kotak jawaban).',
     jumlah: 10,
     istilah: { pelanggan: 'Proyek', berikutnya: 'Proyek berikutnya', selesai: 'Shift selesai!', pembuka: 'meminta bantuan:' },
     levels: [
@@ -126,6 +180,9 @@ window.GAMES = window.GAMES || {};
       { id: 'level-2', nama: 'Mandor', deskripsi: 'Lingkaran, trapesium, dan bangun gabungan berbentuk L.', gratis: false, jenis: [luasLingkaran, kelilingLingkaran, luasTrapesium, luasL] },
       { id: 'level-3', nama: 'Arsitek', deskripsi: 'Volume dan luas permukaan balok, tabung, dan kerucut.', gratis: false, jenis: [volumeBalok, luasPermukaanBalok, volumeTabung, volumeKerucut] }
     ],
+    daftarLencana: LENCANA,
+    // Dipanggil oleh js/game.js saat level dimulai. Tampilan dan alur ada di js/game-shift.js.
+    mainkan(ctx, lv, indeks) { window.GameFX.shift({ ctx, game: window.GAMES['build-it'], lv, indeks, tema: TEMA }); },
     buat(level) { return pilih(level.jenis)(); },
     namaNasabah() { return pilih(['Pak Mandor', 'Bu Arsitek', 'Pak Joko', 'Bu Ratna', 'Mas Dani', 'Mbak Lia', 'Pak Hendra', 'Bu Wati']); }
   };

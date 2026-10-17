@@ -157,10 +157,59 @@ window.GAMES = window.GAMES || {};
     };
   }
 
+
+  // ---------- Tampilan game: tema loket bank ----------
+  const AVATAR = ['🧑‍🦱', '👩‍🦰', '👨‍🦳', '👵', '👴', '🧑‍🎓', '👩‍💼', '🧔', '👩‍🍳', '🧑‍🌾'];
+  const UCAP_BENAR = ['Tepat sekali!', 'Mantap, hitunganmu rapi!', 'Nasabah puas!', 'Cepat dan akurat!'];
+  function adeganBank(S) {
+    const FX = window.GameFX;
+    const h = ML.h;
+    const mathy = FX.mathy(84);
+    const tumpukan = h('span', { class: 'gx-tumpukan', 'aria-hidden': 'true' }, '💵');
+    const el = h('div', { class: 'gx-loket' }, mathy.el,
+      h('div', { class: 'gx-meja' }, tumpukan, h('strong', null, 'Loket 1'), h('small', null, 'Math Bank')));
+    return {
+      el,
+      perbarui(st, aksi) {
+        tumpukan.textContent = '💵'.repeat(1 + Math.min(5, Math.floor(st.koin / 20))) + (st.koin >= 90 ? '💰' : '');
+        if (aksi === 'mulai') mathy.set('senang', st.i === 0 ? 'Selamat datang di Math Bank!' : 'Silakan, ada yang bisa dibantu?');
+        else if (aksi === 'benar') mathy.set(st.beruntun >= 3 ? 'hebat' : 'girang', FX.pilihAcak(UCAP_BENAR));
+        else if (aksi === 'salah1') mathy.set('mikir', 'Hmm, hitung lagi pelan-pelan.');
+        else if (aksi === 'gagal') mathy.set('sedih', 'Tidak apa-apa, baca pembahasannya.');
+        else if (aksi === 'cemas') mathy.set('cemas', 'Nasabah mulai tidak sabar!');
+        else if (aksi === 'pangkat') mathy.set('hebat', 'Pangkatmu naik!');
+      }
+    };
+  }
+  const TEMA = {
+    id: 'bank',
+    avatar: AVATAR,
+    hadiah: '💵',
+    nyawa: 3,
+    jabatan: ['Teller Baru', 'Teller Andal', 'Teller Bintang', 'Bintang Cabang'],
+    sabar: (lv) => ({ 'level-1': 50, 'level-2': 65, 'level-3': 80 })[lv.id] || 60,
+    kata: {
+      pelanggan: 'Nasabah', berkata: 'berkata:', lanjut: 'Nasabah berikutnya', lihatHasil: 'Lihat hasil shift',
+      antrean: 'Antrean', terakhir: 'Nasabah terakhir!', pergi: 'Nasabah kehabisan sabar dan pergi.',
+      selesaiJudul: 'Shift selesai!', gugurJudul: 'Shift berakhir',
+      gugurIsi: 'Kepuasan nasabah habis. Baca pembahasannya, lalu coba lagi. Tiga jawaban benar berturut-turut memulihkan satu hati.'
+    },
+    adegan: adeganBank
+  };
+  const LENCANA = [
+    { id: 'pertama', ikon: '🏦', nama: 'Hari Pertama', syarat: 'Selesaikan 1 shift' },
+    { id: 'beruntun5', ikon: '🔥', nama: 'Teller Beruntun', syarat: '5 nasabah benar berturut-turut di percobaan pertama' },
+    { id: 'kilat', ikon: '⚡', nama: 'Teller Kilat', syarat: 'Jawab benar dalam 8 detik, 3 kali dalam satu shift' },
+    { id: 'sempurna', ikon: '💎', nama: 'Shift Sempurna', syarat: '10 nasabah benar semua di percobaan pertama' },
+    { id: 'tigabintang', ikon: '🌟', nama: 'Bintang Tiga', syarat: 'Raih 3 bintang dalam satu shift' },
+    { id: 'naikjabatan', ikon: '🎖️', nama: 'Naik Jabatan', syarat: 'Lulus satu level dan buka level berikutnya' },
+    { id: 'tamat', ikon: '👑', nama: 'Kepala Cabang', syarat: 'Lulus level terakhir' }
+  ];
+
   window.GAMES['math-bank'] = {
     nama: 'Math Bank',
-    pengantar: 'Kamu teller di Math Bank. Setiap shift ada 10 nasabah dengan satu soal masing-masing. Jawab dengan tepat, kumpulkan koin, dan naikkan jabatanmu.',
-    aturan: 'Jawaban benar di percobaan pertama: 10 koin. Percobaan kedua: 5 koin. Tiga jawaban benar berturut-turut menambah bonus 5 koin. Tulis jawaban dalam angka, boleh memakai tanda minus.',
+    pengantar: 'Kamu teller di Math Bank. Setiap shift ada 10 nasabah yang antre di loketmu. Jawab sebelum kesabaran mereka habis, kumpulkan koin, dan naikkan jabatanmu.',
+    aturan: 'Jawaban benar di percobaan pertama: 10 koin. Percobaan kedua: 5 koin. Tiga jawaban benar berturut-turut menambah bonus 5 koin dan memulihkan satu hati. Nasabah yang kehabisan sabar atau salah dua kali mengurangi hati kepuasan (3 hati). Mode santai menghilangkan batas waktu. Tulis jawaban dalam angka, boleh memakai tanda minus.',
     jumlah: 10,
     levels: [
       { id: 'level-1', nama: 'Teller Magang', deskripsi: 'Saldo, setor, dan tarik. Bilangan bulat positif dan negatif.', gratis: true,
@@ -170,6 +219,9 @@ window.GAMES = window.GAMES || {};
       { id: 'level-3', nama: 'Kepala Cabang', deskripsi: 'Campuran pecahan, desimal, dan persen bertingkat.', gratis: false,
         jenis: [pecahanSaldo, pecahanGabungan, desimalBunga, naikTurun, saldoDenganBunga, cariTabungan] }
     ],
+    daftarLencana: LENCANA,
+    // Dipanggil oleh js/game.js saat level dimulai. Tampilan dan alur ada di js/game-shift.js.
+    mainkan(ctx, lv, indeks) { window.GameFX.shift({ ctx, game: window.GAMES['math-bank'], lv, indeks, tema: TEMA }); },
     // Membuat satu soal baru. Jenis soal diacak.
     buat(level) { return pilih(level.jenis)(); },
     namaNasabah() { return pilih(NAMA); }
