@@ -111,7 +111,7 @@
       const nama = game.namaNasabah();
       avatar = h('div', { class: 'gx-avatar gx-masuk', 'aria-hidden': 'true' }, S.avatars[S.i]);
       gelembung = h('div', { class: 'gx-gelembung gx-masuk' }, h('strong', null, nama + ' ' + tema.kata.berkata), ...s.narasi.map((t) => h('p', null, t)));
-      if (s.gambar) gelembung.append(s.gambar);
+      if (s.gambar) gelembung.append(h('div', { class: 'gambar-wadah' }, s.gambar));
       gelembung.append(h('p', { class: 'tanya' }, s.tanya));
       depan.replaceChildren(avatar, gelembung);
       awalan.textContent = s.satuan === 'Rp' ? 'Rp' : '';

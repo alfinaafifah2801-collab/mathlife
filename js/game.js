@@ -42,11 +42,11 @@
   // Naikkan angka VERSI setiap kali file game diubah, agar browser tidak memakai salinan lama.
   const VERSI = '3';
   const muat = (src) => new Promise((ok, gagal) => {
-    const s = document.createElement('script');
-    s.src = src + '?v=' + VERSI;
-    s.onload = ok;
-    s.onerror = () => gagal(new Error('tidak termuat'));
-    document.head.append(s);
+    const sk = document.createElement('script');
+    sk.src = src + '?v=' + VERSI;
+    sk.onload = ok;
+    sk.onerror = () => gagal(new Error('tidak termuat'));
+    document.head.append(sk);
   });
   try {
     await muat('js/game-fx.js');
@@ -63,10 +63,13 @@
   // ---------- Akses dan skor tersimpan ----------
   const { data: profil } = await db.from('profiles').select('role').eq('id', uid).single();
   const pengajar = ['admin_platform', 'guru', 'admin_sekolah'].includes(profil && profil.role);
+  // Game besar (level 2 dan 3 dan seterusnya) hanya untuk paket yang memuat game. Level 1 selalu gratis sebagai pratinjau.
+  // Paket Basic hanya berisi worksheet, jadi tidak membuka level game berikutnya.
+  const PAKET_DENGAN_GAME = ['worksheet-game', 'guru', 'sekolah'];
   let punyaPaket = pengajar;
   if (!punyaPaket) {
-    const { data } = await db.from('user_packages').select('id').eq('user_id', uid).gt('expires_at', new Date().toISOString()).limit(1);
-    punyaPaket = Boolean(data && data.length);
+    const { data } = await db.from('user_packages').select('packages(slug)').eq('user_id', uid).gt('expires_at', new Date().toISOString());
+    punyaPaket = (data || []).some((r) => r.packages && PAKET_DENGAN_GAME.includes(r.packages.slug));
   }
   const terbaik = new Map(); // idLevel -> skor terbaik
   const { data: tersimpan } = await db.from('progress').select('item_key, score').eq('user_id', uid).like('item_key', id + '|%');
@@ -116,7 +119,7 @@
       const terkunciLevel = prev && !pengajar && (terbaik.get(prev.id) || 0) < AMBANG;
       const skor = terbaik.get(lv.id);
       let aksi;
-      if (butuhPaket) aksi = h('a', { class: 'btn btn-kecil btn-sekunder', href: 'dashboard.html' }, 'Buka dengan paket');
+      if (butuhPaket) aksi = h('a', { class: 'btn btn-kecil btn-sekunder', href: 'dashboard.html' }, 'Buka dengan Paket Worksheet + Game');
       else if (terkunciLevel) aksi = h('span', { class: 'lencana' }, 'Raih ' + AMBANG + ' koin di level sebelumnya');
       else aksi = h('button', { type: 'button', class: 'btn btn-kecil', onclick: () => main(lv, i) }, skor ? 'Main lagi' : 'Mulai shift');
       return h('div', { class: 'kartu-bab' + (butuhPaket || terkunciLevel ? ' segera' : '') },
@@ -137,6 +140,7 @@
   // ---------- Satu shift permainan ----------
   function main(lv, indeksLevel) {
     if (typeof game.mainkan === 'function') { game.mainkan(ctx, lv, indeksLevel); return; }
+    const I = Object.assign({ pelanggan: 'Nasabah', berikutnya: 'Nasabah berikutnya', selesai: 'Shift selesai!', pembuka: 'berkata:' }, game.istilah || {});
     const S = { i: 0, koin: 0, benar: 0, beruntun: 0, percobaan: 0, soal: null, nasabah: '', terakhir: '' };
     const atas = h('div', { class: 'game-info', 'aria-live': 'polite' });
     const isiGaris = h('span');
@@ -151,12 +155,12 @@
     const awalan = h('span', { class: 'satuan' });
     const akhiran = h('span', { class: 'satuan' });
     const jawabBtn = h('button', { type: 'button', class: 'btn', onclick: () => periksa() }, 'Jawab');
-    const lanjutBtn = h('button', { type: 'button', class: 'btn', hidden: true, onclick: () => lanjut() }, 'Nasabah berikutnya');
+    const lanjutBtn = h('button', { type: 'button', class: 'btn', hidden: true, onclick: () => lanjut() }, I.berikutnya);
     const baris = h('div', { class: 'baris-form isian' }, awalan, masuk, akhiran, jawabBtn, lanjutBtn);
 
     function perbaruiAtas() {
       atas.replaceChildren(...[
-        h('span', null, lv.nama), h('span', null, 'Nasabah ', h('strong', null, Math.min(S.i + 1, game.jumlah) + '/' + game.jumlah)),
+        h('span', null, lv.nama), h('span', null, I.pelanggan + ' ', h('strong', null, Math.min(S.i + 1, game.jumlah) + '/' + game.jumlah)),
         h('span', null, 'Koin ', h('strong', null, S.koin)),
         S.beruntun >= 2 ? h('span', { class: 'api' }, 'Beruntun ' + S.beruntun) : null
       ].filter(Boolean));
@@ -170,8 +174,9 @@
       kartu.replaceChildren(
         h('div', { class: 'avatar', 'aria-hidden': 'true' }, S.nasabah.slice(-1) === ' ' ? '?' : S.nasabah.split(' ').pop().charAt(0)),
         h('div', { class: 'gelembung' },
-          h('strong', null, S.nasabah + ' berkata:'),
+          h('strong', null, S.nasabah + ' ' + I.pembuka),
           ...s.narasi.map((t) => h('p', null, t)),
+          ...(s.gambar ? [h('div', { class: 'gambar-wadah' }, s.gambar)] : []),
           h('p', { class: 'tanya' }, s.tanya)));
       awalan.textContent = s.satuan === 'Rp' ? 'Rp' : '';
       akhiran.textContent = s.satuan === '%' ? '%' : '';
@@ -189,7 +194,7 @@
 
     function selesaiSoal() {
       masuk.disabled = true; jawabBtn.hidden = true; lanjutBtn.hidden = false;
-      lanjutBtn.textContent = S.i + 1 >= game.jumlah ? 'Lihat hasil shift' : 'Nasabah berikutnya';
+      lanjutBtn.textContent = S.i + 1 >= game.jumlah ? 'Lihat hasil shift' : I.berikutnya;
       lanjutBtn.focus({ preventScroll: true });
       perbaruiAtas();
     }
@@ -227,7 +232,7 @@
       const bukaBerikut = berikut && S.koin >= AMBANG && (berikut.gratis || punyaPaket);
       app.replaceChildren(
         h('div', { class: 'hasil-shift' },
-          h('h1', null, 'Shift selesai!'),
+          h('h1', null, I.selesai),
           h('p', { class: 'bintang', 'aria-label': bintang + ' dari 3 bintang' }, '\u2605'.repeat(bintang) + '\u2606'.repeat(3 - bintang)),
           h('div', { class: 'ringkas-baris' }, h('span', null, 'Koin'), h('strong', null, S.koin)),
           h('div', { class: 'ringkas-baris' }, h('span', null, 'Jawaban benar'), h('strong', null, S.benar + '/' + game.jumlah)),
