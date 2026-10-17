@@ -149,7 +149,7 @@ window.GAMES = window.GAMES || {};
             return h('div', { class: 'kartu-bab' + (kunci ? ' segera' : '') },
               h('span', { class: 'no-bab' }, m.no), h('h3', null, m.nama), h('p', null, m.desk),
               h('p', { class: 'redup', style: 'font-size:.9rem' }, skor ? 'Skor terbaik: ' + skor : 'Belum dimainkan'),
-              kunci ? h('a', { class: 'btn btn-kecil btn-sekunder', href: 'dashboard.html' }, 'Buka dengan paket')
+              kunci ? h('a', { class: 'btn btn-kecil btn-sekunder', href: 'dashboard.html' }, 'Buka dengan Paket Worksheet + Game')
                 : h('button', { type: 'button', class: 'btn btn-kecil', onclick: m.aksi }, skor ? 'Main lagi' : 'Mulai'));
           })),
           h('section', { class: 'gx-bagian-lencana' }, h('h2', null, 'Lencana'), lencana.galeri()));
