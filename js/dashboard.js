@@ -138,6 +138,160 @@
     return p;
   }
 
+  // ---------- Kelas: guru membuat kelas dan melihat rekap, siswa bergabung dengan kode kelas ----------
+  // Semua akses lewat fungsi database (supabase/kelas.sql). Kalau fungsinya belum dipasang, tampilkan pesan yang jelas.
+  function galatKelas(e) {
+    const t = e && e.message ? e.message : '';
+    if (/could not find the function|schema cache/i.test(t)) {
+      return h('div', { class: 'pesan pesan-galat', role: 'alert' }, 'Fitur kelas belum diaktifkan. Jalankan supabase/kelas.sql di SQL Editor Supabase.');
+    }
+    return galat(e);
+  }
+
+  function unduhCsv(namaFile, kolom, baris) {
+    // Sel yang diawali = + - @ diberi tanda ' di depan agar tidak dibaca sebagai rumus di Excel atau Sheets.
+    const aman = (v) => {
+      let t = String(v == null ? '' : v);
+      if (/^[=+\-@\t\r]/.test(t)) t = "'" + t;
+      return '"' + t.replace(/"/g, '""') + '"';
+    };
+    const isi = [kolom, ...baris].map((r) => r.map(aman).join(';')).join('\r\n');
+    const blob = new Blob(['\uFEFF' + isi], { type: 'text/csv;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = namaFile;
+    document.body.append(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  }
+
+  function panelKelasGuru() {
+    const p = panel('Kelas dan rekap progres');
+    p.el.style.gridColumn = '1 / -1';
+    const pesan = h('div');
+    const daftar = h('div');
+    const rekap = h('div', { style: 'margin-top:1rem' });
+    const inputNama = h('input', {
+      type: 'text', name: 'nama-kelas', placeholder: 'Nama kelas, misalnya 8A', maxlength: '60',
+      autocomplete: 'off', required: true, 'aria-label': 'Nama kelas'
+    });
+    const form = h('form', {
+      class: 'baris-form',
+      onsubmit: async (e) => {
+        e.preventDefault();
+        tampilPesan(pesan, '');
+        const { data, error } = await db.rpc('create_class', { p_name: inputNama.value });
+        if (error) return tampilPesan(pesan, error.message, 'galat');
+        const baru = Array.isArray(data) ? data[0] : data;
+        tampilPesan(pesan, 'Kelas dibuat. Bagikan kode kelas ini ke siswa: ' + (baru && baru.kode ? baru.kode : ''), 'sukses');
+        inputNama.value = '';
+        muat();
+      }
+    }, inputNama, h('button', { type: 'submit', class: 'btn' }, 'Buat kelas'));
+
+    async function salin(kode) {
+      try { await navigator.clipboard.writeText(kode); tampilPesan(pesan, 'Kode ' + kode + ' disalin.', 'sukses'); }
+      catch (e) { tampilPesan(pesan, 'Salin manual kode ini: ' + kode, 'sukses'); }
+    }
+
+    async function lihat(k) {
+      rekap.replaceChildren(h('p', { class: 'redup' }, 'Memuat rekap...'));
+      const { data, error } = await db.rpc('class_report', { p_class_id: k.kelas_id });
+      if (error) return rekap.replaceChildren(galatKelas(error));
+      const baris = data || [];
+      if (!baris.length) {
+        return rekap.replaceChildren(h('h3', null, 'Rekap ' + k.kelas_nama),
+          h('p', null, 'Belum ada siswa. Minta siswa memasukkan kode ' + k.kode + ' di dashboard mereka.'));
+      }
+      const tgl = (d) => (d ? tanggal(d) : '');
+      const kolom = ['Nama', 'Kelas', 'Total XP', 'Subbab selesai', 'Game dimainkan', 'Terakhir aktif'];
+      const nilai = baris.map((r) => [r.nama || '', r.kelas ? String(r.kelas) : '', String(r.total_xp), String(r.subbab_selesai), String(r.game_dimainkan), tgl(r.terakhir_aktif)]);
+      rekap.replaceChildren(
+        h('h3', null, 'Rekap ' + k.kelas_nama + ' (' + baris.length + ' siswa)'),
+        tabel([...kolom, 'Aksi'], baris.map((r, i) => [...nilai[i].map((v) => v || '-'),
+          h('button', { type: 'button', class: 'btn btn-kecil btn-sekunder', onclick: async () => {
+            if (!window.confirm('Keluarkan ' + (r.nama || 'siswa ini') + ' dari kelas ' + k.kelas_nama + '?')) return;
+            const { error: e2 } = await db.rpc('remove_student', { p_class_id: k.kelas_id, p_student_id: r.siswa_id });
+            if (e2) return tampilPesan(pesan, e2.message, 'galat');
+            lihat(k); muat();
+          } }, 'Keluarkan')])),
+        h('div', { style: 'margin-top:.8rem' },
+          h('button', { type: 'button', class: 'btn btn-kecil', onclick: () => unduhCsv('rekap-' + k.kelas_nama.replace(/[^\w-]+/g, '_') + '.csv', kolom, nilai) }, 'Unduh CSV')));
+    }
+
+    async function hapus(k) {
+      if (!window.confirm('Hapus kelas ' + k.kelas_nama + '? Siswa dikeluarkan dari kelas ini. Progres belajar mereka tidak terhapus.')) return;
+      const { error } = await db.rpc('delete_class', { p_class_id: k.kelas_id });
+      if (error) return tampilPesan(pesan, error.message, 'galat');
+      rekap.replaceChildren();
+      muat();
+    }
+
+    async function muat() {
+      const { data, error } = await db.rpc('my_classes');
+      if (error) return daftar.replaceChildren(galatKelas(error));
+      const kelas = data || [];
+      if (!kelas.length) return daftar.replaceChildren(h('p', null, 'Belum ada kelas. Buat kelas, lalu bagikan kodenya ke siswa.'));
+      daftar.replaceChildren(h('ul', { class: 'daftar' }, kelas.map((k) => h('li', null,
+        h('strong', null, k.kelas_nama), ' ',
+        h('span', { class: 'redup' }, 'kode '), h('code', null, k.kode), ' ',
+        h('span', { class: 'redup' }, '\u00B7 ' + k.jumlah_siswa + ' siswa'), ' ',
+        h('button', { type: 'button', class: 'btn btn-kecil', onclick: () => lihat(k) }, 'Lihat rekap'), ' ',
+        h('button', { type: 'button', class: 'btn btn-kecil btn-sekunder', onclick: () => salin(k.kode) }, 'Salin kode'), ' ',
+        h('button', { type: 'button', class: 'btn btn-kecil btn-sekunder', onclick: () => hapus(k) }, 'Hapus')))));
+    }
+
+    p.isi.replaceChildren(
+      h('p', { class: 'redup' }, 'Buat kelas, bagikan kode kelas ke siswa, lalu lihat progres mereka di sini. Siswa tahu bahwa guru dapat melihat nama, total XP, dan aktivitas belajar mereka di kelas ini.'),
+      form, h('div', { style: 'margin:.8rem 0' }, pesan), daftar, rekap);
+    muat();
+    return p;
+  }
+
+  function panelKelasSiswa() {
+    const p = panel('Kelasku');
+    const pesan = h('div');
+    const daftar = h('div');
+    const input = h('input', {
+      type: 'text', name: 'kode-kelas', placeholder: 'KLS-XXXX-XXXX',
+      autocomplete: 'off', required: true, 'aria-label': 'Kode kelas'
+    });
+    const form = h('form', {
+      class: 'baris-form',
+      onsubmit: async (e) => {
+        e.preventDefault();
+        tampilPesan(pesan, '');
+        const { data, error } = await db.rpc('join_class', { p_code: input.value });
+        if (error) return tampilPesan(pesan, error.message, 'galat');
+        tampilPesan(pesan, 'Kamu bergabung ke kelas ' + data + '.', 'sukses');
+        input.value = '';
+        muat();
+      }
+    }, input, h('button', { type: 'submit', class: 'btn' }, 'Gabung'));
+
+    async function muat() {
+      const { data, error } = await db.rpc('my_enrolled_classes');
+      if (error) return daftar.replaceChildren(galatKelas(error));
+      const kelas = data || [];
+      if (!kelas.length) return daftar.replaceChildren();
+      daftar.replaceChildren(h('ul', { class: 'daftar' }, kelas.map((k) => h('li', null,
+        h('strong', null, k.kelas_nama), ' ', h('span', { class: 'redup' }, 'guru: ' + k.guru_nama), ' ',
+        h('button', { type: 'button', class: 'btn btn-kecil btn-sekunder', onclick: async () => {
+          if (!window.confirm('Keluar dari kelas ' + k.kelas_nama + '?')) return;
+          const { error: e2 } = await db.rpc('leave_class', { p_class_id: k.kelas_id });
+          if (e2) return tampilPesan(pesan, e2.message, 'galat');
+          muat();
+        } }, 'Keluar')))));
+    }
+
+    p.isi.replaceChildren(
+      h('p', { class: 'redup' }, 'Punya kode kelas dari gurumu? Masukkan di sini. Setelah bergabung, gurumu dapat melihat namamu, total XP, dan aktivitas belajarmu di kelas itu. Kamu bisa keluar kapan saja.'),
+      form, h('div', { style: 'margin:.8rem 0' }, pesan), daftar);
+    muat();
+    return p;
+  }
+
   function panelBimbel(uid) {
     const p = panel('Daftar bimbel');
     const pesan = h('div');
@@ -355,9 +509,9 @@
   } else {
     const paket = panelPaket(user.id);
     if (modeGuru) {
-      grid.append(paket.el, panelMengajar().el, panelGame('Game untuk kelasmu').el, panelTukarKode(() => paket.muat()).el, panelSegera().el);
+      grid.append(paket.el, panelMengajar().el, panelGame('Game untuk kelasmu').el, panelTukarKode(() => paket.muat()).el, panelKelasGuru().el);
     } else {
-      grid.append(paket.el, panelTukarKode(() => paket.muat()).el, panelProgres(user.id).el, panelBimbel(user.id).el, panelGame().el);
+      grid.append(paket.el, panelTukarKode(() => paket.muat()).el, panelProgres(user.id).el, panelKelasSiswa().el, panelBimbel(user.id).el, panelGame().el);
     }
   }
   app.replaceChildren(sapaan, grid);
