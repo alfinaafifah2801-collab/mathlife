@@ -60,7 +60,7 @@
       p.isi.replaceChildren(h('ul', { class: 'daftar' }, aktif.map((x) =>
         h('li', null,
           h('strong', null, (x.packages && x.packages.name) || 'Paket'),
-          h('span', { class: 'redup' }, ' sampai ' + tanggal(x.expires_at))))));
+          h('span', { class: 'redup' }, ' sampai ' + tanggal(x.expires_at) + ' (sisa ' + Math.max(1, Math.ceil((new Date(x.expires_at) - new Date()) / 86400000)) + ' hari)')))));
     }
     muat();
     return { el: p.el, muat };
@@ -111,8 +111,8 @@
     return p;
   }
 
-  function panelGame() {
-    const p = panel('Game MathLife');
+  function panelGame(judul) {
+    const p = panel(judul || 'Game MathLife');
     const game = [
       ['Mall Simulator', 'Diskon, pajak, dan SPLDV', 'mall-simulator'],
       ['Math Bank', 'Bilangan, persen, dan bunga', 'math-bank'],
@@ -125,6 +125,16 @@
       h('li', null, h('strong', null, nama), ' ', h('span', { class: 'redup' }, topik), ' ',
         ada ? h('a', { class: 'btn btn-kecil', href: 'game.html?id=' + ada }, 'Main') : h('span', { class: 'lencana' }, 'Segera')))),
       h('p', { style: 'margin-top:.8rem' }, h('a', { href: 'game.html' }, 'Lihat semua game')));
+    return p;
+  }
+
+  // Panel khusus guru: pintasan materi per kelas.
+  function panelMengajar() {
+    const p = panel('Materi untuk mengajar');
+    p.isi.replaceChildren(
+      h('p', null, 'Pilih kelas, lalu bab dan subbab. Setiap subbab berisi materi, worksheet, latihan, dan evaluasi yang bisa kamu tampilkan di kelas.'),
+      h('div', { class: 'baris-form' }, [7, 8, 9].map((k) => h('a', { class: 'btn btn-kecil', href: 'materi.html?kelas=' + k }, 'Kelas ' + k))),
+      h('p', { class: 'redup', style: 'margin-top:.8rem' }, 'Kamu bisa mencoba setiap subbab dan game seperti siswa. Skor dan XP yang kamu raih tersimpan di akunmu sendiri.'));
     return p;
   }
 
@@ -313,18 +323,30 @@
     return p;
   }
 
+  // Guru dikenali dari peran pengajar, atau dari Paket Guru yang masih aktif (peran tetap Siswa, jadi masa berlaku habis otomatis).
+  // Paket Sekolah sengaja tidak dihitung: kodenya ditukar oleh siswa.
+  let paketGuru = null;
+  if (profil.role === 'siswa') {
+    const { data: up } = await db.from('user_packages').select('expires_at, packages(slug, name)')
+      .eq('user_id', user.id).gt('expires_at', new Date().toISOString());
+    paketGuru = (up || []).find((x) => x.packages && x.packages.slug === 'guru') || null;
+  }
+  const modeGuru = Boolean(paketGuru) || profil.role === 'guru' || profil.role === 'admin_sekolah';
+  if (paketGuru) $('#peran-pengguna').textContent = 'Guru (Paket Guru)';
+
   // ---------- Susun halaman sesuai peran ----------
   const namaDepan = (profil.full_name || '').split(' ')[0] || 'teman';
   const keterangan = {
     siswa: 'Tukar kode untuk membuka paket, lalu mulai belajar.',
-    guru: 'Tukar kode Paket Guru untuk membuka materi.',
+    guru: 'Materi dan game penuh terbuka untuk akun guru.',
     admin_sekolah: 'Kelola paket sekolahmu di sini.',
     admin_platform: 'Kelola kode aktivasi, pengguna, dan pendaftar bimbel.'
   }[profil.role] || '';
+  const keteranganTampil = paketGuru ? 'Materi dan game penuh sudah terbuka lewat Paket Guru-mu.' : keterangan;
 
   const sapaan = h('div', { class: 'sapaan' },
     h('img', { src: 'assets/mathy-siap.png', alt: '', width: '84' }),
-    h('div', null, h('h1', null, 'Halo, ' + namaDepan + '!'), h('p', { class: 'redup' }, keterangan),
+    h('div', null, h('h1', null, 'Halo, ' + namaDepan + '!'), h('p', { class: 'redup' }, keteranganTampil),
       h('a', { class: 'btn btn-kecil', href: 'materi.html' }, 'Buka materi')));
 
   const grid = h('div', { class: 'grid-panel' });
@@ -332,11 +354,10 @@
     grid.append(adminKode().el, adminPengguna(user.id).el, adminBimbel().el);
   } else {
     const paket = panelPaket(user.id);
-    grid.append(paket.el, panelTukarKode(() => paket.muat()).el);
-    if (profil.role === 'siswa') {
-      grid.append(panelProgres(user.id).el, panelBimbel(user.id).el, panelGame().el);
+    if (modeGuru) {
+      grid.append(paket.el, panelMengajar().el, panelGame('Game untuk kelasmu').el, panelTukarKode(() => paket.muat()).el, panelSegera().el);
     } else {
-      grid.append(panelSegera().el);
+      grid.append(paket.el, panelTukarKode(() => paket.muat()).el, panelProgres(user.id).el, panelBimbel(user.id).el, panelGame().el);
     }
   }
   app.replaceChildren(sapaan, grid);
