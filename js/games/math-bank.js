@@ -161,7 +161,17 @@ window.GAMES = window.GAMES || {};
   // ---------- Tampilan game: tema loket bank ----------
   const AVATAR = ['🧑‍🦱', '👩‍🦰', '👨‍🦳', '👵', '👴', '🧑‍🎓', '👩‍💼', '🧔', '👩‍🍳', '🧑‍🌾'];
   const UCAP_BENAR = ['Tepat sekali!', 'Mantap, hitunganmu rapi!', 'Nasabah puas!', 'Cepat dan akurat!'];
-  function adeganBank(S) {
+  // Ekspresi dan ucapan Si Mathy untuk tiap kejadian. Dipakai oleh adegan 2D dan adegan 3D.
+  function suasanaMathy(mathy, st, aksi) {
+    const FX = window.GameFX;
+    if (aksi === 'mulai') mathy.set('senang', st.i === 0 ? 'Selamat datang di Math Bank!' : 'Silakan, ada yang bisa dibantu?');
+    else if (aksi === 'benar') mathy.set(st.beruntun >= 3 ? 'hebat' : 'girang', FX.pilihAcak(UCAP_BENAR));
+    else if (aksi === 'salah1') mathy.set('mikir', 'Hmm, hitung lagi pelan-pelan.');
+    else if (aksi === 'gagal') mathy.set('sedih', 'Tidak apa-apa, baca pembahasannya.');
+    else if (aksi === 'cemas') mathy.set('cemas', 'Nasabah mulai tidak sabar!');
+    else if (aksi === 'pangkat') mathy.set('hebat', 'Pangkatmu naik!');
+  }
+  function adeganBank() {
     const FX = window.GameFX;
     const h = ML.h;
     const mathy = FX.mathy(84);
@@ -172,12 +182,7 @@ window.GAMES = window.GAMES || {};
       el,
       perbarui(st, aksi) {
         tumpukan.textContent = '💵'.repeat(1 + Math.min(5, Math.floor(st.koin / 20))) + (st.koin >= 90 ? '💰' : '');
-        if (aksi === 'mulai') mathy.set('senang', st.i === 0 ? 'Selamat datang di Math Bank!' : 'Silakan, ada yang bisa dibantu?');
-        else if (aksi === 'benar') mathy.set(st.beruntun >= 3 ? 'hebat' : 'girang', FX.pilihAcak(UCAP_BENAR));
-        else if (aksi === 'salah1') mathy.set('mikir', 'Hmm, hitung lagi pelan-pelan.');
-        else if (aksi === 'gagal') mathy.set('sedih', 'Tidak apa-apa, baca pembahasannya.');
-        else if (aksi === 'cemas') mathy.set('cemas', 'Nasabah mulai tidak sabar!');
-        else if (aksi === 'pangkat') mathy.set('hebat', 'Pangkatmu naik!');
+        suasanaMathy(mathy, st, aksi);
       }
     };
   }
@@ -191,6 +196,7 @@ window.GAMES = window.GAMES || {};
     kata: {
       pelanggan: 'Nasabah', berkata: 'berkata:', lanjut: 'Nasabah berikutnya', lihatHasil: 'Lihat hasil shift',
       antrean: 'Antrean', terakhir: 'Nasabah terakhir!', pergi: 'Nasabah kehabisan sabar dan pergi.',
+      balasBenar: ['Terima kasih, Teller!', 'Wah, cepat sekali!', 'Pas, sesuai hitunganku!', 'Mantap, uangku aman!'],
       selesaiJudul: 'Shift selesai!', gugurJudul: 'Shift berakhir',
       gugurIsi: 'Kepuasan nasabah habis. Baca pembahasannya, lalu coba lagi. Tiga jawaban benar berturut-turut memulihkan satu hati.'
     },
@@ -220,8 +226,25 @@ window.GAMES = window.GAMES || {};
         jenis: [pecahanSaldo, pecahanGabungan, desimalBunga, naikTurun, saldoDenganBunga, cariTabungan] }
     ],
     daftarLencana: LENCANA,
+    tiga: true, // menandakan game ini punya tampilan 3D (tombol 3D muncul di menu)
     // Dipanggil oleh js/game.js saat level dimulai. Tampilan dan alur ada di js/game-shift.js.
-    mainkan(ctx, lv, indeks) { window.GameFX.shift({ ctx, game: window.GAMES['math-bank'], lv, indeks, tema: TEMA }); },
+    // Bila tampilan 3D menyala, three.js dan js/game-3d.js dimuat dulu. Kalau gagal, game memakai tampilan gelembung biasa.
+    async mainkan(ctx, lv, indeks) {
+      const FX = window.GameFX;
+      let tema = TEMA;
+      if (FX.tiga.aktif()) {
+        try {
+          ctx.app.replaceChildren(ML.h('p', { class: 'redup', role: 'status' }, 'Memuat tampilan 3D\u2026'));
+          const THREE = await FX.muatThree();
+          await FX.muatSkrip('js/game-3d.js');
+          const adegan = FX.bank3D.buat(THREE, { suasana: suasanaMathy });
+          tema = Object.assign({}, TEMA, { adegan: () => adegan });
+        } catch (e) {
+          FX.toast('Tampilan 3D tidak bisa dimuat. Memakai tampilan biasa.');
+        }
+      }
+      FX.shift({ ctx, game: window.GAMES['math-bank'], lv, indeks, tema });
+    },
     // Membuat satu soal baru. Jenis soal diacak.
     buat(level) { return pilih(level.jenis)(); },
     namaNasabah() { return pilih(NAMA); }

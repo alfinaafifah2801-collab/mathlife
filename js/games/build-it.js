@@ -155,6 +155,7 @@ window.GAMES = window.GAMES || {};
     kata: {
       pelanggan: 'Proyek', berkata: 'meminta bantuan:', lanjut: 'Proyek berikutnya', lihatHasil: 'Lihat hasil shift',
       antrean: 'Proyek menunggu', terakhir: 'Proyek terakhir!', pergi: '',
+      balasBenar: ['Mantap, ukurannya pas!', 'Wah, presisi sekali!', 'Terima kasih, Tukang!', 'Bangunannya makin tinggi!'],
       selesaiJudul: 'Shift selesai!', gugurJudul: 'Shift berakhir', gugurIsi: ''
     },
     adegan: adeganBangun
