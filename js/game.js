@@ -40,7 +40,7 @@
     return;
   }
   // Naikkan angka VERSI setiap kali file game diubah, agar browser tidak memakai salinan lama.
-  const VERSI = '3';
+  const VERSI = '4';
   const muat = (src) => new Promise((ok, gagal) => {
     const sk = document.createElement('script');
     sk.src = src + '?v=' + VERSI;
@@ -50,6 +50,7 @@
   });
   try {
     await muat('js/game-fx.js');
+    window.GameFX.versi = VERSI;
     await muat('js/game-shift.js');
     await muat('js/games/' + id + '.js');
   } catch (e) {
@@ -132,7 +133,7 @@
         h('img', { src: 'assets/mathy-game.png', alt: '', width: '110' }),
         h('div', null, h('h1', null, game.nama), h('p', null, game.pengantar))),
       h('div', { class: 'kotak kotak-krem' }, h('p', null, h('strong', null, 'Cara main: '), game.aturan)),
-      window.GameFX.kontrol(),
+      window.GameFX.kontrol({ tiga: Boolean(game.tiga) }),
       h('div', { class: 'grid-bab' }, kartu),
       ctx.lencana ? h('section', { class: 'gx-bagian-lencana' }, h('h2', null, 'Lencana'), ctx.lencana.galeri()) : null);
   }

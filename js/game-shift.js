@@ -1,11 +1,64 @@
 // Mesin "shift" bersama: antrean pelanggan, bar kesabaran, combo, koin terbang, pangkat, lencana, dan layar hasil.
-// Dipakai oleh Math Bank dan Build It lewat GameFX.shift({ ctx, game, lv, indeks, tema }).
+// Soal dan jawaban tampil sebagai gelembung percakapan. Dipakai oleh Math Bank dan Build It lewat
+// GameFX.shift({ ctx, game, lv, indeks, tema }).
+//
+// Adegan (tema.adegan) boleh menyediakan "sink" sendiri (mis. adegan 3D) untuk menampilkan gelembung:
+//   sink.nasabah({ nama, avatar, berkata, narasi, gambar, tanya, label })
+//   sink.jawaban(teks, status)            status: 'benar' | 'salah'
+//   sink.balasan(dari, node, jenis)       dari: 'nasabah' | 'mathy'
+//   sink.bahas(nodes)                     (opsional) pembahasan; bila tidak ada, panel pembahasan bawaan dipakai
+//   sink.asal()                           (opsional) elemen asal koin terbang dan ledakan
+//   sink.reaksi(emoji)                    (opsional)
 (function () {
   'use strict';
   const FX = window.GameFX;
   const BATAS_PANGKAT = [0, 30, 60, 90];
-  const JEDA_KELUAR = 380;
+  const JEDA_BAWAAN = 120;
   const BUANG_SATUAN = /\s*(cm|m)\s*[²³23]?\s*$/i;
+
+  // ---------- Gelembung percakapan bawaan ----------
+  function buatThread() {
+    const h = ML.h;
+    const el = h('div', { class: 'gx-chat', role: 'log', 'aria-live': 'polite', 'aria-label': 'Percakapan' });
+    let avatarNasabah = null;
+    let emojiNasabah = '\uD83D\uDE42';
+    const turun = () => { el.scrollTop = el.scrollHeight; };
+    function avatarMathy() {
+      const a = h('div', { class: 'gx-ava mathy', 'aria-hidden': 'true' });
+      const img = h('img', { src: 'assets/mathy-game.png', alt: '' });
+      img.addEventListener('error', () => { img.remove(); a.textContent = 'M'; });
+      a.append(img);
+      return a;
+    }
+    function baris(sisi, ava, isi, kelas) {
+      const b = h('div', { class: 'gx-bubble' + (kelas ? ' ' + kelas : '') }, isi);
+      el.append(h('div', { class: 'gx-baris-chat ' + sisi }, ava, b));
+      turun();
+      return b;
+    }
+    return {
+      el,
+      nasabah(i) {
+        emojiNasabah = i.avatar;
+        avatarNasabah = h('div', { class: 'gx-ava', 'aria-hidden': 'true' }, i.avatar);
+        el.append(h('div', { class: 'gx-pembatas' }, i.label));
+        baris('kiri', avatarNasabah, [
+          h('strong', null, i.nama + ' ' + i.berkata),
+          ...i.narasi.map((t) => h('p', null, t)),
+          i.gambar ? h('div', { class: 'gambar-wadah' }, i.gambar) : null,
+          h('p', { class: 'tanya' }, i.tanya)
+        ].filter(Boolean));
+      },
+      jawaban(teks, status) { baris('kanan', null, h('p', null, teks), 's-' + status); },
+      balasan(dari, node, jenis) {
+        const ava = dari === 'mathy' ? avatarMathy() : h('div', { class: 'gx-ava', 'aria-hidden': 'true' }, emojiNasabah);
+        baris('kiri', ava, node, jenis === 'info' ? 's-info' : '');
+      },
+      bahas(nodes) { baris('kiri', avatarMathy(), [h('strong', null, 'Pembahasan'), ...nodes], 's-info'); },
+      asal() { return avatarNasabah || el; },
+      reaksi(e) { emojiNasabah = e; if (avatarNasabah) avatarNasabah.textContent = e; }
+    };
+  }
 
   function shift(o) {
     const { ctx, game, lv, indeks, tema } = o;
@@ -20,7 +73,7 @@
     const S = {
       i: 0, koin: 0, benar: 0, pertama: 0, beruntun: 0, maksBeruntun: 0, percobaan: 0, soal: null, terakhir: '',
       nyawa: NYAWA, riwayat: [], kilat: 0, pangkat: 0, total: 0, sisa: 0, mulaiAt: 0, tikAt: performance.now(),
-      selesaiSoal: false, selesai: false, gugur: false, cemas: false, baruLencana: [],
+      selesaiSoal: false, selesai: false, gugur: false, cemas: false, baruLencana: [], namaNasabah: '',
       avatars: Array.from({ length: JUMLAH }, () => FX.pilihAcak(tema.avatar))
     };
 
@@ -30,13 +83,15 @@
     const isiGaris = h('span');
     const garis = h('div', { class: 'gx-garis' }, isiGaris);
     const adegan = tema.adegan(S);
+    const sink = adegan.sink || buatThread();
+    const pakaiThread = !adegan.sink;
     const antrean = h('div', { class: 'gx-antrean', 'aria-hidden': 'true' });
-    const depan = h('div', { class: 'gx-depan' });
     const sabarIsi = h('span', { class: 'gx-sabar-isi' });
     const sabarWajah = h('span', { class: 'gx-sabar-wajah', 'aria-hidden': 'true' }, '\uD83D\uDE0A');
     const sabarCap = h('small', { class: 'gx-sabar-cap' });
     const sabar = tema.sabar ? h('div', { class: 'gx-sabar' }, sabarWajah, h('div', { class: 'gx-sabar-bar', 'aria-hidden': 'true' }, sabarIsi), sabarCap) : null;
-    const panggung = h('div', { class: 'gx-panggung' }, h('div', { class: 'gx-baris-atas' }, adegan.el, antrean), depan, sabar);
+    const atas = adegan.tanpaAntrean ? adegan.el : h('div', { class: 'gx-baris-atas' }, adegan.el, antrean);
+    const panggung = h('div', { class: 'gx-panggung' + (adegan.tanpaAntrean ? ' gx-panggung-3d' : '') }, atas, sabar);
     const umpan = h('div', { class: 'umpan', 'aria-live': 'polite' });
     const bahas = h('div', { class: 'bahas', hidden: true });
     const awalan = h('span', { class: 'satuan' });
@@ -48,8 +103,6 @@
     const jawabBtn = h('button', { type: 'button', class: 'btn', onclick: () => periksa() }, 'Jawab');
     const lanjutBtn = h('button', { type: 'button', class: 'btn', hidden: true, onclick: () => lanjut() }, tema.kata.lanjut);
     const baris = h('div', { class: 'baris-form isian' }, awalan, masuk, akhiran, jawabBtn, lanjutBtn);
-    let avatar = null;
-    let gelembung = null;
 
     function pangkatDari(koin) {
       let p = 0;
@@ -57,6 +110,8 @@
       return p;
     }
     function beri(id, diam) { if (lencana && lencana.beri(id, diam)) S.baruLencana.push(id); }
+    const asal = () => (sink.asal ? sink.asal() : panggung);
+    const bersihkan = () => { if (adegan.bersih) adegan.bersih(); };
 
     function perbaruiHud() {
       chipKoin.replaceChildren('\uD83E\uDE99 Koin ', h('strong', null, S.koin));
@@ -91,7 +146,7 @@
       sabarCap.textContent = santai ? 'Mode santai' : Math.max(0, Math.ceil(S.sisa / 1000)) + ' detik';
     }
     const timer = setInterval(() => {
-      if (!panggung.isConnected) { clearInterval(timer); return; }
+      if (!panggung.isConnected) { clearInterval(timer); bersihkan(); return; }
       const now = performance.now();
       const dt = Math.min(now - S.tikAt, 500);
       S.tikAt = now;
@@ -108,12 +163,11 @@
       let s = game.buat(lv);
       if (S.terakhir && s.narasi[0] === S.terakhir) s = game.buat(lv);
       S.soal = s; S.terakhir = s.narasi[0]; S.percobaan = 0; S.selesaiSoal = false; S.cemas = false;
-      const nama = game.namaNasabah();
-      avatar = h('div', { class: 'gx-avatar gx-masuk', 'aria-hidden': 'true' }, S.avatars[S.i]);
-      gelembung = h('div', { class: 'gx-gelembung gx-masuk' }, h('strong', null, nama + ' ' + tema.kata.berkata), ...s.narasi.map((t) => h('p', null, t)));
-      if (s.gambar) gelembung.append(h('div', { class: 'gambar-wadah' }, s.gambar));
-      gelembung.append(h('p', { class: 'tanya' }, s.tanya));
-      depan.replaceChildren(avatar, gelembung);
+      S.namaNasabah = game.namaNasabah();
+      sink.nasabah({
+        nama: S.namaNasabah, avatar: S.avatars[S.i], berkata: tema.kata.berkata, narasi: s.narasi, gambar: s.gambar, tanya: s.tanya,
+        label: tema.kata.pelanggan + ' ' + (S.i + 1) + ' dari ' + JUMLAH
+      });
       awalan.textContent = s.satuan === 'Rp' ? 'Rp' : '';
       akhiran.textContent = s.satuan && s.satuan !== 'Rp' ? s.satuan : '';
       masuk.value = ''; masuk.disabled = false;
@@ -128,7 +182,9 @@
     }
 
     function tampilBahas() {
-      bahas.replaceChildren(...S.soal.bahas.map((t) => h('p', null, t)));
+      const nodes = S.soal.bahas.map((t) => h('p', null, t));
+      if (sink.bahas) { sink.bahas(nodes); return; }
+      bahas.replaceChildren(...nodes);
       bahas.hidden = false;
     }
 
@@ -154,23 +210,26 @@
       adegan.perbarui(S, 'pangkat');
     }
 
-    function benar() {
+    function benar(teksJawab) {
       let poin = S.percobaan === 1 ? 10 : 5;
       if (S.percobaan === 1) { S.beruntun += 1; S.pertama += 1; if (S.beruntun >= 3) poin += 5; } else { S.beruntun = 0; }
       S.maksBeruntun = Math.max(S.maksBeruntun, S.beruntun);
       S.koin += poin; S.benar += 1; S.riwayat.push('ok');
       FX.bunyi('benar'); setTimeout(() => FX.bunyi('koin'), 170);
       const bonus = S.beruntun >= 3 && S.percobaan === 1;
-      umpan.replaceChildren(h('span', { class: 'benar-teks' }, 'Benar! +' + poin + ' koin' + (bonus ? ' (termasuk bonus beruntun)' : '')));
-      avatar.textContent = '\uD83D\uDE04';
-      gelembung.classList.add('gx-benar');
+      sink.jawaban(teksJawab, 'benar');
+      sink.balasan('nasabah', h('div', null,
+        h('p', null, FX.pilihAcak(tema.kata.balasBenar)),
+        h('p', null, h('span', { class: 'benar-teks' }, 'Benar! +' + poin + ' koin' + (bonus ? ' (termasuk bonus beruntun)' : '')))), 'benar');
+      if (sink.reaksi) sink.reaksi('\uD83D\uDE04');
       const n = Math.min(4, Math.ceil(poin / 5));
+      const dari = asal();
       for (let k = 0; k < n; k += 1) {
-        FX.terbang(avatar, chipKoin, k % 2 ? '\uD83E\uDE99' : tema.hadiah, k === n - 1 ? () => {
+        FX.terbang(dari, chipKoin, k % 2 ? '\uD83E\uDE99' : tema.hadiah, k === n - 1 ? () => {
           chipKoin.classList.remove('naik'); void chipKoin.offsetWidth; chipKoin.classList.add('naik');
         } : null, k * 90);
       }
-      FX.meledakDi(avatar, ['\u2728', '\u2B50'], 8);
+      FX.meledakDi(dari, ['\u2728', '\u2B50'], 8);
       if (bonus) {
         FX.toast('\uD83D\uDD25 Combo \u00D7' + S.beruntun + '! +5 koin bonus');
         setTimeout(() => FX.bunyi('combo'), 300);
@@ -183,46 +242,49 @@
       tampilBahas(); selesaiSoal();
     }
 
-    function salahPertama() {
+    function salahPertama(teksJawab) {
       S.beruntun = 0;
       FX.bunyi('salah');
-      gelembung.classList.remove('gx-goyang'); void gelembung.offsetWidth; gelembung.classList.add('gx-goyang');
-      umpan.replaceChildren(h('span', { class: 'salah' }, 'Belum tepat. Coba sekali lagi. Petunjuk: ' + S.soal.petunjuk));
-      masuk.select(); perbaruiHud();
+      sink.jawaban(teksJawab, 'salah');
+      sink.balasan('mathy', h('p', null, h('span', { class: 'salah' }, 'Belum tepat. Coba sekali lagi. Petunjuk: ' + S.soal.petunjuk)), 'salah');
+      masuk.value = ''; masuk.focus({ preventScroll: true }); perbaruiHud();
       adegan.perbarui(S, 'salah1');
     }
 
-    function gagalSoal(pesan) {
+    function gagalSoal(pesan, teksJawab) {
       S.beruntun = 0; kurangiNyawa(); S.riwayat.push('gagal');
       FX.bunyi('salah');
-      avatar.textContent = '\uD83D\uDE20';
-      umpan.replaceChildren(h('span', { class: 'salah' }, pesan + ' Jawaban yang benar: ' + tampilJawab(S.soal.jawab, S.soal.satuan) + '.'));
+      if (teksJawab) sink.jawaban(teksJawab, 'salah');
+      if (sink.reaksi) sink.reaksi('\uD83D\uDE20');
+      sink.balasan('nasabah', h('p', null, h('span', { class: 'salah' }, (pesan ? pesan + ' ' : '') + 'Jawaban yang benar: ' + tampilJawab(S.soal.jawab, S.soal.satuan) + '.')), 'salah');
       adegan.perbarui(S, 'gagal');
       tampilBahas(); selesaiSoal();
     }
-    function salahKedua() { gagalSoal(''); }
-    function habis() { if (!S.selesaiSoal) gagalSoal(tema.kata.pergi); }
+    function habis() { if (!S.selesaiSoal) gagalSoal(tema.kata.pergi, ''); }
 
     function periksa() {
       if (S.selesaiSoal) return;
-      const v = parseAngka(String(masuk.value).replace(BUANG_SATUAN, ''));
+      const mentah = String(masuk.value).replace(BUANG_SATUAN, '');
+      const v = parseAngka(mentah);
       if (Number.isNaN(v)) { umpan.replaceChildren(h('span', { class: 'salah' }, 'Tulis jawabanmu dalam angka.')); return; }
+      umpan.replaceChildren();
       S.percobaan += 1;
-      if (Math.abs(v - S.soal.jawab) < 1e-9) benar();
-      else if (S.percobaan === 1) salahPertama();
-      else salahKedua();
+      const teksJawab = awalan.textContent + mentah.trim().replace(/^rp\s*/i, '') + (akhiran.textContent ? (akhiran.textContent === '%' ? '' : ' ') + akhiran.textContent : '');
+      if (Math.abs(v - S.soal.jawab) < 1e-9) benar(teksJawab);
+      else if (S.percobaan === 1) salahPertama(teksJawab);
+      else gagalSoal('', teksJawab);
     }
 
     function lanjut() {
       if (lanjutBtn.disabled) return;
       lanjutBtn.disabled = true;
-      const marah = S.riwayat[S.riwayat.length - 1] === 'gagal';
-      if (avatar) avatar.className = 'gx-avatar ' + (marah ? 'gx-keluar-marah' : 'gx-keluar-ok');
+      adegan.perbarui(S, 'keluar');
+      const jeda = FX.reduksi() ? 0 : (adegan.jedaKeluar != null ? adegan.jedaKeluar : JEDA_BAWAAN);
       setTimeout(() => {
         lanjutBtn.disabled = false;
         S.i += 1;
         if (S.i >= JUMLAH || S.gugur) hasil(); else baru();
-      }, FX.reduksi() ? 0 : JEDA_KELUAR);
+      }, jeda);
     }
 
     // ---------- Layar hasil ----------
@@ -246,6 +308,7 @@
           h('p', null, berikut ? 'Kamu naik ke ' + berikut.nama + '.' : 'Kamu sekarang ' + lv.nama + '.'))) : null;
       const kartuGugur = S.gugur ? h('div', { class: 'gx-jabatan gx-kalah' }, h('span', { class: 'gx-jabatan-ikon', 'aria-hidden': 'true' }, '\uD83D\uDE22'),
         h('div', null, h('strong', null, tema.kata.gugurJudul), h('p', null, tema.kata.gugurIsi))) : null;
+      bersihkan();
       app.replaceChildren(h('div', { class: 'gx-hasil hasil-shift' },
         mathy.el,
         h('h1', null, judul),
@@ -271,9 +334,12 @@
       } else FX.bunyi(S.gugur ? 'kalah' : 'koin');
     }
 
-    app.replaceChildren(
+    app.replaceChildren(...[
       h('p', null, h('button', { type: 'button', class: 'btn-teks', onclick: () => ctx.menuLevel() }, '\u2039 Menu level')),
-      FX.kontrol(), hud, garis, panggung, baris, umpan, bahas);
+      FX.kontrol({ tiga: Boolean(game.tiga) }), hud, garis, panggung,
+      pakaiThread ? sink.el : null,
+      baris, umpan, bahas
+    ].filter(Boolean));
     baru();
   }
 

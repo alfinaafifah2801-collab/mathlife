@@ -11,7 +11,21 @@
   const pilihAcak = (arr) => arr[acak(0, arr.length - 1)];
   const bisaAnimasi = () => !reduksi() && Boolean(document.body && document.body.animate);
 
-  const pengaturan = { suara: baca('ml-suara') !== '0', santai: baca('ml-santai') === '1' };
+  const BASE = (document.currentScript && document.currentScript.src) || location.href;
+  const bisaWebGL = () => {
+    try {
+      const c = document.createElement('canvas');
+      return Boolean(window.WebGLRenderingContext && (c.getContext('webgl2') || c.getContext('webgl')));
+    } catch (e) { return false; }
+  };
+  // Tampilan 3D: nyala bila dipilih pemain; bila belum memilih, nyala hanya di perangkat yang mampu.
+  const awal3D = () => {
+    const s = baca('ml-3d');
+    if (s === '1') return true;
+    if (s === '0') return false;
+    return bisaWebGL() && !reduksi() && (navigator.hardwareConcurrency || 4) >= 4;
+  };
+  const pengaturan = { suara: baca('ml-suara') !== '0', santai: baca('ml-santai') === '1', tiga: awal3D() };
 
   // ---------- Gaya ----------
   const CSS = `
@@ -133,6 +147,46 @@
 .gx-toast{background:#1E1B4B;color:#fff;padding:.5rem 1rem;border-radius:12px;font-weight:800;box-shadow:0 6px 18px rgba(0,0,0,.25);animation:gx-toast 3.2s forwards}
 .gx-toast.lencana{background:#B35A00}
 .gx-toast.naik{background:#1F55A8}
+
+.gx-chat{max-height:21rem;overflow-y:auto;background:#F4F6FF;border:2px solid #D5DCF5;border-radius:16px;padding:.8rem;margin:.8rem 0;display:flex;flex-direction:column;gap:.55rem;scroll-behavior:smooth}
+.gx-baris-chat{display:flex;gap:.5rem;align-items:flex-end;max-width:100%}
+.gx-baris-chat.kanan{justify-content:flex-end}
+.gx-bubble{max-width:82%;padding:.6rem .85rem;border-radius:18px;background:#fff;color:#1E1B4B;border:2px solid #C9D0F0;overflow-wrap:anywhere;animation:gx-bubble .25s ease-out}
+.gx-baris-chat.kiri .gx-bubble{border-bottom-left-radius:4px}
+.gx-baris-chat.kanan .gx-bubble{background:#1F55A8;color:#fff;border-color:#1F55A8;border-bottom-right-radius:4px;font-weight:800}
+.gx-baris-chat.kanan .gx-bubble.s-benar{background:#1E9E78;border-color:#1E9E78}
+.gx-baris-chat.kanan .gx-bubble.s-salah{background:#D6453D;border-color:#D6453D}
+.gx-bubble p{margin:.2rem 0}
+.gx-bubble .tanya{font-weight:800}
+.gx-bubble svg{max-width:100%;height:auto;display:block;margin:.3rem auto}
+.gx-bubble.s-info{background:#F1F2FF;border-color:#8E94E8}
+.gx-ava{width:2.4rem;height:2.4rem;border-radius:50%;background:#fff;border:2px solid #C9D0F0;display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex:none;overflow:hidden;font-weight:800;color:#1F55A8}
+.gx-ava.mathy{background:#E8EAFB}
+.gx-ava img{width:100%;height:100%;object-fit:cover}
+.gx-pembatas{align-self:center;font-size:.78rem;font-weight:800;color:#4B53A8;background:#E8EAFB;border-radius:999px;padding:.1rem .8rem}
+@keyframes gx-bubble{from{transform:translateY(8px) scale(.96);opacity:0}to{transform:none;opacity:1}}
+
+.gx-panggung-3d{padding:0}
+.gx-panggung-3d .gx-sabar{padding:.5rem .9rem .7rem;margin-top:0}
+.gx-3d{position:relative;background:linear-gradient(#CFE0FF,#F3F6FF);color:#1E1B4B}
+.gx-3d-kotak{height:390px;position:relative}
+.gx-3d-kanvas{width:100%;height:100%;display:block}
+.gx-b3{background:#fff;color:#1E1B4B;border:3px solid #1F55A8;border-radius:16px;padding:.55rem .8rem;font-size:.94rem;max-height:44%;overflow:auto;overflow-wrap:anywhere;box-shadow:0 4px 0 rgba(31,85,168,.22);animation:gx-bubble .25s ease-out}
+.gx-b3 p{margin:.2rem 0}
+.gx-b3 .tanya{font-weight:800}
+.gx-b3.nasabah{position:absolute;left:2%;top:3%;width:55%;border-bottom-left-radius:4px}
+.gx-b3-kanan{position:absolute;right:2%;top:3%;width:39%;display:flex;flex-direction:column;gap:.4rem;pointer-events:none}
+.gx-b3-kanan .gx-b3{max-height:none;pointer-events:auto}
+.gx-b3.pemain{background:#1F55A8;color:#fff;border-color:#1F55A8;font-weight:800;text-align:right;border-bottom-right-radius:4px}
+.gx-b3.pemain.s-benar{background:#1E9E78;border-color:#1E9E78}
+.gx-b3.pemain.s-salah{background:#D6453D;border-color:#D6453D}
+.gx-b3.mathy{background:#F1F2FF;border-color:#8E94E8}
+.gx-b3 hr{border:0;border-top:2px dashed #C9D0F0;margin:.4rem 0}
+.gx-b3-mathy{position:absolute;right:2%;bottom:2%}
+.gx-3d-mati .gx-3d-kotak{height:5rem;display:flex;align-items:center;justify-content:center;font-size:3rem}
+.gx-3d-mati .gx-3d-kotak::after{content:"🏦"}
+.gx-3d-mati .gx-b3.nasabah,.gx-3d-mati .gx-b3-kanan,.gx-3d-mati .gx-b3-mathy{position:static;width:auto;margin:.5rem}.gx-3d-mati .gx-b3-kanan{pointer-events:auto}.gx-3d-mati .gx-b3-mathy{display:flex;justify-content:flex-end}.gx-3d-mati .gx-b3{max-height:none}
+@media (max-width:640px){.gx-3d-kotak{height:230px}.gx-b3.nasabah,.gx-b3-kanan,.gx-b3-mathy{position:static;width:auto;margin:.5rem}.gx-b3-kanan{pointer-events:auto}.gx-b3-mathy{display:flex;justify-content:flex-end}.gx-b3{max-height:none}.gx-bubble{max-width:92%}}
 
 @keyframes gx-masuk{from{transform:translateX(50px);opacity:0}to{transform:none;opacity:1}}
 @keyframes gx-keluar-ok{to{transform:translateX(70px) scale(.9);opacity:0}}
@@ -293,20 +347,59 @@
   }
 
   // ---------- Komponen ----------
-  function kontrol() {
+  function kontrol(opsi) {
     const h = ML.h;
     const suara = h('button', { type: 'button', class: 'gx-tombol-kecil' });
     const santai = h('button', { type: 'button', class: 'gx-tombol-kecil', title: 'Mode santai: tidak ada batas waktu' });
+    const tombol3d = opsi && opsi.tiga ? h('button', { type: 'button', class: 'gx-tombol-kecil', title: 'Tampilan 3D memakai lebih banyak baterai dan memori. Matikan bila terasa berat.' }) : null;
     function segarkan() {
       suara.textContent = pengaturan.suara ? '\uD83D\uDD0A Suara nyala' : '\uD83D\uDD07 Suara mati';
       suara.setAttribute('aria-pressed', String(pengaturan.suara));
       santai.textContent = '\uD83D\uDC22 Mode santai: ' + (pengaturan.santai ? 'nyala' : 'mati');
       santai.setAttribute('aria-pressed', String(pengaturan.santai));
+      if (tombol3d) {
+        tombol3d.textContent = '\uD83E\uDDCA Tampilan 3D: ' + (pengaturan.tiga ? 'nyala' : 'mati');
+        tombol3d.setAttribute('aria-pressed', String(pengaturan.tiga));
+      }
     }
     suara.addEventListener('click', () => { pengaturan.suara = !pengaturan.suara; tulis('ml-suara', pengaturan.suara ? '1' : '0'); segarkan(); bunyi('klik'); });
     santai.addEventListener('click', () => { pengaturan.santai = !pengaturan.santai; tulis('ml-santai', pengaturan.santai ? '1' : '0'); segarkan(); bunyi('klik'); });
+    if (tombol3d) tombol3d.addEventListener('click', () => { pengaturan.tiga = !pengaturan.tiga; tulis('ml-3d', pengaturan.tiga ? '1' : '0'); segarkan(); bunyi('klik'); });
     segarkan();
-    return h('div', { class: 'gx-kontrol' }, suara, santai);
+    return h('div', { class: 'gx-kontrol' }, ...[suara, santai, tombol3d].filter(Boolean));
+  }
+
+  // ---------- Pemuat skrip dan three.js (hanya dipakai game 3D) ----------
+  const skripDimuat = {};
+  function muatSkrip(src) {
+    if (!skripDimuat[src]) {
+      skripDimuat[src] = new Promise((ok, gagal) => {
+        const sk = document.createElement('script');
+        sk.src = src + '?v=' + (window.GameFX && window.GameFX.versi ? window.GameFX.versi : '1');
+        sk.onload = ok;
+        sk.onerror = () => { delete skripDimuat[src]; gagal(new Error('tidak termuat: ' + src)); };
+        document.head.append(sk);
+      });
+    }
+    return skripDimuat[src];
+  }
+  let threeDimuat = null;
+  // Mencoba CDN dulu, lalu salinan lokal js/vendor/three.module.min.js (untuk sekolah yang memblokir CDN).
+  function muatThree() {
+    if (!threeDimuat) {
+      const sumber = [
+        'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js',
+        new URL('vendor/three.module.min.js', BASE).href
+      ];
+      threeDimuat = (async () => {
+        for (const u of sumber) {
+          try { return await import(u); } catch (e) { /* coba sumber berikutnya */ }
+        }
+        throw new Error('three.js tidak termuat');
+      })();
+      threeDimuat.catch(() => { threeDimuat = null; });
+    }
+    return threeDimuat;
   }
 
   function bintang(n, total) {
@@ -372,7 +465,9 @@
 
   pasangGaya();
   window.GameFX = {
-    acak, pilihAcak, reduksi, bunyi, meledak, meledakDi, hujan, terbang, toast, kontrol, bintang, mathy, lencana,
+    acak, pilihAcak, reduksi, bunyi, meledak, meledakDi, hujan, terbang, toast, kontrol, bintang, mathy, lencana, muatSkrip, muatThree,
+    versi: '1',
+    tiga: { aktif: () => pengaturan.tiga, matikan: () => { pengaturan.tiga = false; tulis('ml-3d', '0'); } },
     suara: { aktif: () => pengaturan.suara },
     santai: { aktif: () => pengaturan.santai }
   };
